@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Materiales - Sistema de Gestión{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-box-seam"></i> Gestión de Materiales
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'material_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Material
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Buscar</label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Nombre del material..." value="{{ search }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tipo</label>
+                <select name="tipo" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    {% for tipo in tipos %}
+                    <option value="{{ tipo.codigo_tipo }}" 
+                            {% if tipo_selected|stringformat:"s" == tipo.codigo_tipo|stringformat:"s" %}selected{% endif %}>
+                        {{ tipo.nombre_tipo }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Marca</label>
+                <select name="marca" class="form-select">
+                    <option value="">Todas las marcas</option>
+                    {% for marca in marcas %}
+                    <option value="{{ marca.codigo_marca }}" 
+                            {% if marca_selected|stringformat:"s" == marca.codigo_marca|stringformat:"s" %}selected{% endif %}>
+                        {{ marca.nombre_marca }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Materiales -->
+<div class="card">
+    <div class="card-body">
+        {% if materiales %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Marca</th>
+                        <th class="text-end">Precio</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for material in materiales %}
+                    <tr>
+                        <td>
+                            <span class="badge bg-secondary">{{ material.codigo_material }}</span>
+                        </td>
+                        <td>
+                            <strong>{{ material.nombre_material }}</strong>
+                        </td>
+                        <td>
+                            {% if material.codigo_tipo %}
+                                <span class="badge bg-info text-dark badge-custom">
+                                    {{ material.codigo_tipo.nombre_tipo }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Sin tipo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if material.codigo_marca %}
+                                {{ material.codigo_marca.nombre_marca }}
+                            {% else %}
+                                <span class="text-muted">Sin marca</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <strong>${{ material.precio_material|floatformat:2 }}</strong>
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'material_detail' material.codigo_material %}" 
+                                   class="btn btn-sm btn-outline-info" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'material_update' material.codigo_material %}" 
+                                   class="btn btn-sm btn-outline-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'material_delete' material.codigo_material %}" 
+                                   class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <nav aria-label="Paginación">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if tipo_selected %}&tipo={{ tipo_selected }}{% endif %}{% if marca_selected %}&marca={{ marca_selected }}{% endif %}">
+                        <i class="bi bi-chevron-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if tipo_selected %}&tipo={{ tipo_selected }}{% endif %}{% if marca_selected %}&marca={{ marca_selected }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if tipo_selected %}&tipo={{ tipo_selected }}{% endif %}{% if marca_selected %}&marca={{ marca_selected }}{% endif %}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if tipo_selected %}&tipo={{ tipo_selected }}{% endif %}{% if marca_selected %}&marca={{ marca_selected }}{% endif %}">
+                        <i class="bi bi-chevron-double-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+            <p class="text-muted mt-3">No se encontraron materiales.</p>
+            <a href="{% url 'material_create' %}" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-circle"></i> Crear primer material
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estadísticas -->
+{% if materiales %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ page_obj.paginator.count }}</h3>
+                <p class="text-muted mb-0">Total de Materiales</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ tipos.count }}</h3>
+                <p class="text-muted mb-0">Tipos Disponibles</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">{{ marcas.count }}</h3>
+                <p class="text-muted mb-0">Marcas Registradas</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

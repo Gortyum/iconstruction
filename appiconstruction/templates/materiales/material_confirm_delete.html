@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Eliminar Material - {{ material.nombre_material }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'material_list' %}">Materiales</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'material_detail' material.codigo_material %}">
+                        {{ material.nombre_material }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Eliminar</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Advertencia -->
+        <div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-3" style="font-size: 2rem;"></i>
+            <div>
+                <h5 class="alert-heading mb-1">¡Atención! Acción Irreversible</h5>
+                <p class="mb-0">Está a punto de eliminar este material permanentemente del sistema.</p>
+            </div>
+        </div>
+
+        <!-- Información del Material -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-trash"></i> Confirmar Eliminación
+                </h4>
+            </div>
+            <div class="card-body">
+                <h5 class="mb-4">¿Está seguro que desea eliminar el siguiente material?</h5>
+                
+                <div class="bg-light p-4 rounded mb-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-hash"></i> Código
+                            </h6>
+                            <p class="mb-0">
+                                <span class="badge bg-secondary fs-6">
+                                    {{ material.codigo_material }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-tag"></i> Nombre
+                            </h6>
+                            <p class="mb-0 fs-5">
+                                <strong>{{ material.nombre_material }}</strong>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-currency-dollar"></i> Precio
+                            </h6>
+                            <p class="mb-0 fs-5 text-success">
+                                <strong>${{ material.precio_material|floatformat:2 }}</strong>
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-collection"></i> Tipo
+                            </h6>
+                            <p class="mb-0">
+                                {% if material.codigo_tipo %}
+                                    <span class="badge bg-info text-dark">
+                                        {{ material.codigo_tipo.nombre_tipo }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">Sin tipo</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">
+                                <i class="bi bi-award"></i> Marca
+                            </h6>
+                            <p class="mb-0">
+                                {% if material.codigo_marca %}
+                                    {{ material.codigo_marca.nombre_marca }}
+                                {% else %}
+                                    <span class="text-muted">Sin marca</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advertencias adicionales -->
+                <div class="alert alert-warning" role="alert">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-info-circle"></i> Consecuencias de la eliminación:
+                    </h6>
+                    <ul class="mb-0">
+                        <li>Se perderá toda la información relacionada con este material.</li>
+                        <li>Se eliminarán las asignaciones a obras y almacenamientos en bodegas.</li>
+                        <li>Esta acción <strong>no se puede deshacer</strong>.</li>
+                    </ul>
+                </div>
+
+                <!-- Formulario de confirmación -->
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="d-flex justify-content-between align-items-center pt-3">
+                        <a href="{% url 'material_detail' material.codigo_material %}" 
+                           class="btn btn-outline-secondary btn-lg">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="bi bi-trash"></i> Sí, Eliminar Material
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-lightbulb text-warning"></i> Alternativa
+                </h6>
+                <p class="text-muted mb-0 small">
+                    Si solo desea inactivar temporalmente este material sin eliminarlo, 
+                    considere <a href="{% url 'material_update' material.codigo_material %}">editarlo</a> 
+                    en su lugar y marcar un estado diferente en lugar de eliminarlo permanentemente.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Confirmación adicional al enviar el formulario
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const confirmacion = confirm(
+            '¿Está completamente seguro de eliminar este material?\n\n' +
+            'Esta acción NO se puede deshacer.'
+        );
+        
+        if (!confirmacion) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

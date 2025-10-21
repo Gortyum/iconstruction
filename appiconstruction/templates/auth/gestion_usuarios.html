@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-people-fill"></i> Gestión de Usuarios
+        </h1>
+        <p class="text-muted">Administrar usuarios del sistema</p>
+    </div>
+</div>
+
+<!-- Usuarios Pendientes de Activación -->
+{% if usuarios_pendientes %}
+<div class="alert alert-warning">
+    <h5 class="alert-heading">
+        <i class="bi bi-exclamation-triangle"></i> Usuarios Pendientes de Activación
+    </h5>
+    <p>Hay {{ usuarios_pendientes.count }} usuario(s) esperando aprobación.</p>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-warning">
+        <h5 class="mb-0">
+            <i class="bi bi-hourglass-split"></i> Pendientes de Aprobación
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Email</th>
+                        <th>Fecha Registro</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios_pendientes %}
+                    <tr>
+                        <td><strong>{{ usuario.username }}</strong></td>
+                        <td>{{ usuario.get_full_name }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>{{ usuario.date_joined|date:"d/m/Y H:i" }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'activar_usuario' usuario.id %}" 
+                               class="btn btn-sm btn-success"
+                               onclick="return confirm('¿Activar este usuario?')">
+                                <i class="bi bi-check-circle"></i> Activar
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Todos los Usuarios -->
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-people"></i> Todos los Usuarios
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Último Acceso</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.id }}</td>
+                        <td>
+                            <strong>{{ usuario.username }}</strong>
+                            {% if usuario == user %}
+                                <span class="badge bg-info">Tú</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ usuario.get_full_name }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>
+                            <form method="post" action="{% url 'cambiar_rol_usuario' usuario.id %}" 
+                                  class="d-inline" onchange="this.submit()">
+                                {% csrf_token %}
+                                <select name="rol" class="form-select form-select-sm" 
+                                        {% if usuario == user %}disabled{% endif %}>
+                                    <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>
+                                        Administrador
+                                    </option>
+                                    <option value="BODEGUERO" {% if usuario.rol == 'BODEGUERO' %}selected{% endif %}>
+                                        Bodeguero
+                                    </option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            {% if usuario.activo %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.last_login %}
+                                {{ usuario.last_login|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Nunca</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                {% if usuario.activo and usuario != user %}
+                                    <a href="{% url 'desactivar_usuario' usuario.id %}" 
+                                       class="btn btn-sm btn-outline-danger"
+                                       onclick="return confirm('¿Desactivar este usuario?')"
+                                       title="Desactivar">
+                                        <i class="bi bi-x-circle"></i>
+                                    </a>
+                                {% elif not usuario.activo %}
+                                    <a href="{% url 'activar_usuario' usuario.id %}" 
+                                       class="btn btn-sm btn-outline-success"
+                                       onclick="return confirm('¿Activar este usuario?')"
+                                       title="Activar">
+                                        <i class="bi bi-check-circle"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ usuarios_pendientes.count }}</h3>
+                <p class="text-muted mb-0">Pendientes de Aprobación</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+d-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ usuarios.count }}</h3>
+                <p class="text-muted mb-0">Total de Usuarios</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ usuarios|length }}</h3>
+                <p class="text-muted mb-0">Usuarios Activos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-m

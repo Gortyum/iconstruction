@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Material{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-box-seam"></i> {{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Nombre del Material -->
+                    <div class="mb-3">
+                        <label for="{{ form.nombre_material.id_for_label }}" class="form-label">
+                            <i class="bi bi-tag"></i> Nombre del Material
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               name="{{ form.nombre_material.name }}" 
+                               class="form-control {% if form.nombre_material.errors %}is-invalid{% endif %}" 
+                               id="{{ form.nombre_material.id_for_label }}"
+                               value="{{ form.nombre_material.value|default:'' }}"
+                               placeholder="Ej: Cemento Portland, Acero corrugado..."
+                               required>
+                        {% if form.nombre_material.errors %}
+                        <div class="invalid-feedback">
+                            {{ form.nombre_material.errors.0 }}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Ingrese un nombre descriptivo para el material.
+                        </div>
+                    </div>
+
+                    <!-- Precio del Material -->
+                    <div class="mb-3">
+                        <label for="{{ form.precio_material.id_for_label }}" class="form-label">
+                            <i class="bi bi-currency-dollar"></i> Precio
+                            <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" 
+                                   name="{{ form.precio_material.name }}" 
+                                   class="form-control {% if form.precio_material.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.precio_material.id_for_label }}"
+                                   value="{{ form.precio_material.value|default:'0.00' }}"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="0.00"
+                                   required>
+                            {% if form.precio_material.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.precio_material.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="form-text">
+                            Ingrese el precio unitario del material.
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Tipo de Material -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.codigo_tipo.id_for_label }}" class="form-label">
+                                <i class="bi bi-collection"></i> Tipo de Material
+                            </label>
+                            <select name="{{ form.codigo_tipo.name }}" 
+                                    class="form-select {% if form.codigo_tipo.errors %}is-invalid{% endif %}" 
+                                    id="{{ form.codigo_tipo.id_for_label }}">
+                                <option value="">Seleccione un tipo...</option>
+                                {% for tipo in form.codigo_tipo.field.queryset %}
+                                <option value="{{ tipo.pk }}" 
+                                        {% if form.codigo_tipo.value|stringformat:"s" == tipo.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ tipo.nombre_tipo }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.codigo_tipo.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.codigo_tipo.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Opcional: Categoría del material.
+                            </div>
+                        </div>
+
+                        <!-- Marca del Material -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.codigo_marca.id_for_label }}" class="form-label">
+                                <i class="bi bi-award"></i> Marca
+                            </label>
+                            <select name="{{ form.codigo_marca.name }}" 
+                                    class="form-select {% if form.codigo_marca.errors %}is-invalid{% endif %}" 
+                                    id="{{ form.codigo_marca.id_for_label }}">
+                                <option value="">Seleccione una marca...</option>
+                                {% for marca in form.codigo_marca.field.queryset %}
+                                <option value="{{ marca.pk }}" 
+                                        {% if form.codigo_marca.value|stringformat:"s" == marca.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ marca.nombre_marca }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% if form.codigo_marca.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.codigo_marca.errors.0 }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Opcional: Fabricante del material.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Errores generales del formulario -->
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <hr class="my-4">
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'material_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> {{ button_text }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Ayuda -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Información
+                </h6>
+                <ul class="mb-0 small text-muted">
+                    <li>Los campos marcados con <span class="text-danger">*</span> son obligatorios.</li>
+                    <li>El precio debe ser un valor numérico positivo.</li>
+                    <li>El tipo y la marca son opcionales pero ayudan a organizar los materiales.</li>
+                    <li>Asegúrese de ingresar información precisa para facilitar la gestión.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Validación adicional del formulario
+    (function() {
+        'use strict';
+        
+        // Obtener el formulario
+        const form = document.querySelector('form');
+        
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                // Verificar si el formulario es válido
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        }
+        
+        // Formatear el campo de precio
+        const precioInput = document.getElementById('{{ form.precio_material.id_for_label }}');
+        if (precioInput) {
+            precioInput.addEventListener('blur', function() {
+                if (this.value) {
+                    this.value = parseFloat(this.value).toFixed(2);
+                }
+            });
+        }
+    })();
+</script>
+{% endblock %} class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'material_list' %}">Materiales</a>
+                </li>
+                <li class="breadcrumb-item active">{{ title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div

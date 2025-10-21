@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Bodegas - Sistema de Gestión{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-shop"></i> Gestión de Bodegas
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'bodega_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Bodega
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if bodegas %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Información</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in bodegas %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ item.codigo_bodega }}</span></td>
+                        <td><strong>{{ item }}</strong></td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'bodega_detail' item.codigo_bodega %}" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'bodega_update' item.codigo_bodega %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'bodega_delete' item.codigo_bodega %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+            <p class="text-muted mt-3">No hay bodegas registrados.</p>
+            <a href="{% url 'bodega_create' %}" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-circle"></i> Crear primero
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

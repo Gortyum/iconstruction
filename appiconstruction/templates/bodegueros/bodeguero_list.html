@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Bodegueros - Sistema de Gestión{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-person-badge"></i> Gestión de Bodegueros
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'bodeguero_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Bodeguero
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if bodegueros %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Información</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in bodegueros %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ item.id_bodeguero }}</span></td>
+                        <td><strong>{{ item }}</strong></td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'bodeguero_detail' item.id_bodeguero %}" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'bodeguero_update' item.id_bodeguero %}" class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'bodeguero_delete' item.id_bodeguero %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+            <p class="text-muted mt-3">No hay bodegueros registrados.</p>
+            <a href="{% url 'bodeguero_create' %}" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-circle"></i> Crear primero
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

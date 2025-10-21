@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'prestamo_material_list' %}">Préstamos</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{% url 'prestamo_material_detail' prestamo.codigo_prestamo %}">
+                        Préstamo #{{ prestamo.codigo_prestamo }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">Devolución</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-arrow-return-left"></i> {{ title }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- Info del Préstamo -->
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-info-circle"></i> Información del Préstamo
+                    </h6>
+                    <ul class="mb-0">
+                        <li><strong>Obrero:</strong> {{ prestamo.id_obrero }}</li>
+                        <li><strong>Material:</strong> {{ prestamo.codigo_material.nombre_material }}</li>
+                        <li><strong>Cantidad Prestada:</strong> {{ prestamo.cantidad_prestada|floatformat:2 }}</li>
+                        <li><strong>Fecha Préstamo:</strong> {{ prestamo.fecha_prestamo|date:"d/m/Y H:i" }}</li>
+                    </ul>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Cantidad Devuelta -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.cantidad_devuelta.id_for_label }}" class="form-label">
+                                <i class="bi bi-arrow-return-left"></i> Cantidad Devuelta
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" 
+                                   name="{{ form.cantidad_devuelta.name }}" 
+                                   class="form-control {% if form.cantidad_devuelta.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.cantidad_devuelta.id_for_label }}"
+                                   value="{{ form.cantidad_devuelta.value|default:'0.00' }}"
+                                   step="0.01"
+                                   min="0"
+                                   max="{{ prestamo.cantidad_prestada }}"
+                                   placeholder="0.00"
+                                   required>
+                            {% if form.cantidad_devuelta.errors %}
+                            <div class="invalid-feedback">{{ form.cantidad_devuelta.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Cantidad en buen estado que se devuelve
+                            </div>
+                        </div>
+
+                        <!-- Merma -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.merma.id_for_label }}" class="form-label">
+                                <i class="bi bi-exclamation-triangle"></i> Merma
+                            </label>
+                            <input type="number" 
+                                   name="{{ form.merma.name }}" 
+                                   class="form-control {% if form.merma.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.merma.id_for_label }}"
+                                   value="{{ form.merma.value|default:'0.00' }}"
+                                   step="0.01"
+                                   min="0"
+                                   placeholder="0.00">
+                            {% if form.merma.errors %}
+                            <div class="invalid-feedback">{{ form.merma.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Cantidad que sobró pero no se puede reutilizar
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cálculo Automático -->
+                    <div class="alert alert-warning">
+                        <strong>Cantidad Usada (calculada):</strong>
+                        <span id="cantidad-usada">0.00</span>
+                        <br>
+                        <small class="text-muted">
+                            Cantidad Usada = Cantidad Prestada - Cantidad Devuelta - Merma
+                        </small>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="mb-3">
+                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                            <i class="bi bi-chat-text"></i> Observaciones de la Devolución
+                        </label>
+                        <textarea name="{{ form.observaciones.name }}" 
+                                  class="form-control {% if form.observaciones.errors %}is-invalid{% endif %}" 
+                                  id="{{ form.observaciones.id_for_label }}"
+                                  rows="3"
+                                  placeholder="Comentarios sobre la devolución...">{{ form.observaciones.value|default:'' }}</textarea>
+                        {% if form.observaciones.errors %}
+                        <div class="invalid-feedback">{{ form.observaciones.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Botones -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'prestamo_material_detail' prestamo.codigo_prestamo %}" 
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> {{ button_text }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-calculator"></i> Resumen
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-7">Prestado:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-primary">{{ prestamo.cantidad_prestada|floatformat:2 }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-7">A devolver:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-success" id="devuelto-badge">0.00</span>
+                    </dd>
+                    
+                    <dt class="col-sm-7">Merma:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-warning text-dark" id="merma-badge">0.00</span>
+                    </dd>
+                    
+                    <dt class="col-sm-7">Usado:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-info" id="usado-badge">0.00</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Importante
+                </h6>
+                <ul class="mb-0 small text-muted">
+                    <li>La suma de cantidad devuelta + merma no puede superar la cantidad prestada.</li>
+                    <li>La cantidad usada se calcula automáticamente.</li>
+                    <li>Verifique bien las cantidades antes de confirmar.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const cantidadPrestada = {{ prestamo.cantidad_prestada }};
+    const inputDevuelta = document.getElementById('{{ form.cantidad_devuelta.id_for_label }}');
+    const inputMerma = document.getElementById('{{ form.merma.id_for_label }}');
+    const spanUsada = document.getElementById('cantidad-usada');
+    const devueltoBadge = document.getElementById('devuelto-badge');
+    const mermaBadge = document.getElementById('merma-badge');
+    const usadoBadge = document.getElementById('usado-badge');
+
+    function calcularCantidadUsada() {
+        const devuelta = parseFloat(inputDevuelta.value) || 0;
+        const merma = parseFloat(inputMerma.value) || 0;
+        const usada = cantidadPrestada - devuelta - merma;
+        
+        spanUsada.textContent = usada.toFixed(2);
+        devueltoBadge.textContent = devuelta.toFixed(2);
+        mermaBadge.textContent = merma.toFixed(2);
+        usadoBadge.textContent = usada.toFixed(2);
+        
+        // Validación visual
+        if (devuelta + merma > cantidadPrestada) {
+            spanUsada.parentElement.classList.remove('alert-warning');
+            spanUsada.parentElement.classList.add('alert-danger');
+        } else {
+            spanUsada.parentElement.classList.remove('alert-danger');
+            spanUsada.parentElement.classList.add('alert-warning');
+        }
+    }
+
+    inputDevuelta.addEventListener('input', calcularCantidadUsada);
+    inputMerma.addEventListener('input', calcularCantidadUsada);
+    
+    // Cálculo inicial
+    calcularCantidadUsada();
+</script>
+{% endblock %}

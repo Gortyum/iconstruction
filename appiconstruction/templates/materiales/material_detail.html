@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ material.nombre_material }} - Detalle{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'material_list' %}">Materiales</a>
+                </li>
+                <li class="breadcrumb-item active">{{ material.nombre_material }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información Principal -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-seam"></i> Información del Material
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Código</h6>
+                        <p class="mb-0">
+                            <span class="badge bg-secondary fs-6">
+                                {{ material.codigo_material }}
+                            </span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Nombre</h6>
+                        <p class="mb-0 fs-5"><strong>{{ material.nombre_material }}</strong></p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Precio</h6>
+                        <p class="mb-0 fs-4 text-success">
+                            <strong>${{ material.precio_material|floatformat:2 }}</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Tipo</h6>
+                        <p class="mb-0">
+                            {% if material.codigo_tipo %}
+                                <span class="badge bg-info text-dark fs-6">
+                                    {{ material.codigo_tipo.nombre_tipo }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Sin tipo asignado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Marca</h6>
+                        <p class="mb-0">
+                            {% if material.codigo_marca %}
+                                {{ material.codigo_marca.nombre_marca }}
+                            {% else %}
+                                <span class="text-muted">Sin marca asignada</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Obras donde se usa -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-building"></i> Obras Asignadas
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if obras %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Obra</th>
+                                <th class="text-end">Cantidad</th>
+                                <th>Fecha Asignación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asignacion in obras %}
+                            <tr>
+                                <td>{{ asignacion.codigo_obra.nombre_obra }}</td>
+                                <td class="text-end">
+                                    <strong>{{ asignacion.cantidad_asignada|floatformat:2 }}</strong>
+                                </td>
+                                <td>
+                                    {% if asignacion.fecha_asignacion %}
+                                        {{ asignacion.fecha_asignacion|date:"d/m/Y" }}
+                                    {% else %}
+                                        <span class="text-muted">No especificada</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-info-circle text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mb-0 mt-2">Este material no está asignado a ninguna obra.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bodegas -->
+        <div class="card mt-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-fill"></i> Almacenamiento en Bodegas
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if bodegas %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Bodega</th>
+                                <th>Dirección</th>
+                                <th class="text-end">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for almacenamiento in bodegas %}
+                            <tr>
+                                <td>
+                                    <strong>{{ almacenamiento.codigo_bodega.nombre_bodega }}</strong>
+                                </td>
+                                <td>
+                                    {{ almacenamiento.codigo_bodega.direccion_bodega|default:"Sin dirección" }}
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-primary">
+                                        {{ almacenamiento.cantidad_almacenada|floatformat:2 }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-info-circle text-muted" style="font-size: 2rem;"></i>
+                    <p class="text-muted mb-0 mt-2">Este material no está almacenado en ninguna bodega.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i> Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'material_update' material.codigo_material %}" 
+                       class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Editar Material
+                    </a>
+                    <a href="{% url 'material_delete' material.codigo_material %}" 
+                       class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Eliminar Material
+                    </a>
+                    <hr>
+                    <a href="{% url 'material_list' %}" 
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al Listado
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Resumen
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Obras asignadas:</span>
+                            <span class="badge bg-info">{{ obras.count }}</span>
+                        </div>
+                    </li>
+                    <li class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Bodegas con stock:</span>
+                            <span class="badge bg-warning text-dark">{{ bodegas.count }}</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Stock total:</span>
+                            <span class="badge bg-success">
+                                {{ bodegas|length|default:"0" }} unidades
+                            </span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

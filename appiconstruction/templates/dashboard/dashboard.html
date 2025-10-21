@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Sistema de Obras{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+        <p class="text-muted">
+            Bienvenido, <strong>{{ user.get_full_name }}</strong> 
+            <span class="badge bg-primary">{{ user.get_rol_display }}</span>
+        </p>
+    </div>
+</div>
+
+{% if user.is_admin %}
+<!-- Dashboard para Administrador -->
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-people text-primary" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_obreros }}</h3>
+                <p class="text-muted mb-0">Obreros</p>
+                <a href="{% url 'obrero_list' %}" class="btn btn-sm btn-outline-primary mt-2">
+                    Ver Todos
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-shop text-success" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_bodegas }}</h3>
+                <p class="text-muted mb-0">Bodegas</p>
+                <a href="{% url 'bodega_list' %}" class="btn btn-sm btn-outline-success mt-2">
+                    Ver Todas
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="bi bi-person-badge text-info" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_bodegueros }}</h3>
+                <p class="text-muted mb-0">Bodegueros</p>
+                <a href="{% url 'bodeguero_list' %}" class="btn btn-sm btn-outline-info mt-2">
+                    Ver Todos
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-people-fill text-warning" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ user.username }}</h3>
+                <p class="text-muted mb-0">Usuarios</p>
+                <a href="{% url 'gestion_usuarios' %}" class="btn btn-sm btn-outline-warning mt-2">
+                    Gestionar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> Obreros Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if obreros_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Cargo</th>
+                                <th>Obra</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for obrero in obreros_recientes %}
+                            <tr>
+                                <td><strong>{{ obrero }}</strong></td>
+                                <td>
+                                    {% if obrero.codigo_cargo %}
+                                        <span class="badge bg-info">{{ obrero.codigo_cargo }}</span>
+                                    {% else %}
+                                        <span class="text-muted">Sin cargo</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ obrero.codigo_obra|default:"Sin obra" }}</td>
+                                <td>
+                                    <a href="{% url 'obrero_detail' obrero.id_obrero %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No hay obreros registrados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Accesos Rápidos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'obrero_create' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle"></i> Nuevo Obrero
+                    </a>
+                    <a href="{% url 'bodega_create' %}" class="btn btn-outline-success">
+                        <i class="bi bi-plus-circle"></i> Nueva Bodega
+                    </a>
+                    <a href="{% url 'bodeguero_create' %}" class="btn btn-outline-info">
+                        <i class="bi bi-plus-circle"></i> Nuevo Bodeguero
+                    </a>
+                    <a href="{% url 'gestion_usuarios' %}" class="btn btn-outline-warning">
+                        <i class="bi bi-gear"></i> Gestión de Usuarios
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% elif user.is_bodeguero %}
+<!-- Dashboard para Bodeguero -->
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-box-seam text-primary" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_materiales }}</h3>
+                <p class="text-muted mb-0">Materiales</p>
+                <a href="{% url 'material_list' %}" class="btn btn-sm btn-outline-primary mt-2">
+                    Ver Todos
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-tools text-success" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_herramientas }}</h3>
+                <p class="text-muted mb-0">Herramientas</p>
+                <a href="{% url 'herramienta_list' %}" class="btn btn-sm btn-outline-success mt-2">
+                    Ver Todas
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-arrow-left-right text-warning" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ prestamos_pendientes }}</h3>
+                <p class="text-muted mb-0">Préstamos Materiales</p>
+                <a href="{% url 'prestamo_material_list' %}?estado=pendiente" 
+                   class="btn btn-sm btn-outline-warning mt-2">
+                    Ver Pendientes
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="bi bi-hammer text-info" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ prestamos_herramientas_pendientes }}</h3>
+                <p class="text-muted mb-0">Préstamos Herramientas</p>
+                <a href="{% url 'prestamo_herramienta_list' %}?estado=pendiente" 
+                   class="btn btn-sm btn-outline-info mt-2">
+                    Ver Pendientes
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-seam"></i> Materiales Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if materiales_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th class="text-end">Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for material in materiales_recientes %}
+                            <tr>
+                                <td>{{ material.nombre_material }}</td>
+                                <td class="text-end">${{ material.precio_material|floatformat:2 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No hay materiales registrados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Préstamos Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if prestamos_recientes %}
+                <div class="list-group list-group-flush">
+                    {% for prestamo in prestamos_recientes %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ prestamo.codigo_material.nombre_material }}</strong>
+                                <br>
+                                <small class="text-muted">{{ prestamo.id_obrero }}</small>
+                            </div>
+                            <div>
+                                {% if prestamo.devuelto %}
+                                    <span class="badge bg-success">Devuelto</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Pendiente</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No hay préstamos registrados.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Accesos Rápidos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'material_create' %}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-plus-circle"></i> Nuevo Material
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'herramienta_create' %}" class="btn btn-outline-success w-100">
+                            <i class="bi bi-plus-circle"></i> Nueva Herramienta
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'prestamo_material_create' %}" class="btn btn-outline-warning w-100">
+                            <i class="bi bi-box-arrow-right"></i> Préstamo Material
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{% url 'prestamo_herramienta_create' %}" class="btn btn-outline-info w-100">
+                            <i class="bi bi-tools"></i> Préstamo Herramienta
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Actividades Recientes (Para todos) -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-activity"></i> Mis Actividades Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if actividades_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Acción</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for actividad in actividades_recientes %}
+                            <tr>
+                                <td>{{ actividad.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ actividad.get_accion_display }}</span>
+                                </td>
+                                <td>{{ actividad.descripcion }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No hay actividades registradas.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

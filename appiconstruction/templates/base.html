@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Gestión de Obras{% endblock %}</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css">
+    
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+        }
+        
+        body {
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+            min-height: calc(100vh - 56px);
+        }
+        
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            border: none;
+            margin-bottom: 1.5rem;
+        }
+        
+        .badge-custom {
+            padding: 0.5em 0.75em;
+            font-weight: 500;
+        }
+        
+        .dropdown-menu {
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+        
+        .user-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'dashboard' %}">
+                <i class="bi bi-building"></i> Sistema de Obras
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- Dashboard -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard' %}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    
+                    {% if user.is_bodeguero %}
+                    <!-- Menú para Bodegueros -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'material_list' %}">
+                            <i class="bi bi-box-seam"></i> Materiales
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'herramienta_list' %}">
+                            <i class="bi bi-tools"></i> Herramientas
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="prestamosDropdown" 
+                           role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-arrow-left-right"></i> Préstamos
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'prestamo_material_list' %}">
+                                    <i class="bi bi-box-arrow-right"></i> Préstamos de Materiales
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'prestamo_herramienta_list' %}">
+                                    <i class="bi bi-tools"></i> Préstamos de Herramientas
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'prestamo_material_create' %}">
+                                    <i class="bi bi-plus-circle"></i> Nuevo Préstamo Material
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'prestamo_herramienta_create' %}">
+                                    <i class="bi bi-plus-circle"></i> Nuevo Préstamo Herramienta
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'bodega_list' %}">
+                            <i class="bi bi-shop"></i> Bodegas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'obrero_list' %}">
+                            <i class="bi bi-people"></i> Obreros
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% if user.is_admin %}
+                    <!-- Menú para Administradores -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'obrero_list' %}">
+                            <i class="bi bi-people"></i> Obreros
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="bodegasDropdown" 
+                           role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-shop"></i> Bodegas
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'bodega_list' %}">
+                                    <i class="bi bi-building"></i> Gestión de Bodegas
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'bodeguero_list' %}">
+                                    <i class="bi bi-person-badge"></i> Bodegueros
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'gestion_usuarios' %}">
+                            <i class="bi bi-people-fill"></i> Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="consultasDropdown" 
+                           role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-eye"></i> Consultas
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{% url 'material_list' %}">
+                                    <i class="bi bi-box-seam"></i> Materiales
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'herramienta_list' %}">
+                                    <i class="bi bi-tools"></i> Herramientas
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'prestamo_material_list' %}">
+                                    <i class="bi bi-arrow-left-right"></i> Préstamos
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Usuario -->
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle user-badge" href="#" id="userDropdown" 
+                           role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            <span>{{ user.get_full_name|default:user.username }}</span>
+                            <span class="badge bg-light text-dark">{{ user.get_rol_display }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <span class="dropdown-item-text">
+                                    <strong>{{ user.get_full_name }}</strong><br>
+                                    <small class="text-muted">{{ user.email }}</small>
+                                </span>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'dashboard' %}">
+                                    <i class="bi bi-speedometer2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{% url 'logout' %}">
+                                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="container mt-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center text-muted">
+            <p class="mb-0">&copy; 2024 Sistema de Gestión de Obras</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
