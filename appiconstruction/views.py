@@ -25,7 +25,7 @@ from .models import (
     # Bodegas
     Bodega, TipoBodega, Bodeguero,
     # Préstamos
-    PrestamoMaterial, DevolucionMaterial, PrestamoHerramienta
+    PrestamoMaterial, DevolucionMaterial, PrestamoHerramienta, Informe
 )
 
 # ========================================
@@ -898,6 +898,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'dashboard/dashboard.html'
     login_url = 'login'
     
+    def dispatch(self, request, *args, **kwargs):
+        # Redireccionar supervisores a su dashboard específico
+        if request.user.is_authenticated and request.user.is_supervisor():
+            return redirect('supervisor_dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
@@ -1039,3 +1045,400 @@ class BodegueroRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     def handle_no_permission(self):
         messages.error(self.request, 'No tienes permisos para acceder a esta sección.')
         return redirect('dashboard')
+    
+# AGREGAR ESTAS VISTAS AL ARCHIVO views.py
+
+from django.http import HttpResponse, JsonResponse
+from django.db.models import Count, Sum, Q, Avg
+from django.utils import timezone
+from datetime import datetime, timedelta
+import csv
+
+
+# ======== MIXINS PARA SUPERVISOR ========
+
+class SupervisorRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Mixin que requiere que el usuario sea supervisor"""
+    login_url = 'login'
+    
+    def test_func(self):
+        return self.request.user.is_supervisor()
+    
+    def handle_no_permission(self):
+        messages.error(self.request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('dashboard')
+
+
+def es_supervisor(user):
+    """Verifica si el usuario es supervisor"""
+    return user.is_authenticated and user.rol == 'SUPERVISOR'
+
+
+# ======== DASHBOARD SUPERVISOR ========
+
+class SupervisorDashboardView(SupervisorRequiredMixin, TemplateView):
+    """Dashboard para supervisores"""
+    template_name = 'supervisor/dashboard.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Estadísticas generales
+        context['total_obras'] = Obra.objects.count()
+        context['total_obreros'] = Obrero.objects.count()
+        context['total_materiales'] = Material.objects.count()
+        context['total_herramientas'] = Herramienta.objects.count()
+        
+        # Préstamos
+        context['prestamos_materiales_activos'] = PrestamoMaterial.objects.filter(devuelto=False).count()
+        context['prestamos_herramientas_activos'] = PrestamoHerramienta.objects.filter(devuelto=False).count()
+        
+        # Informes recientes del supervisor
+        if self.request.user.supervisor:
+            context['mis_informes'] = Informe.objects.filter(
+                id_supervisor=self.request.user.supervisor
+            ).order_by('-fecha_informe')[:5]
+        
+        return context
+
+
+# ======== REPORTES ========
+
+class ReportesView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """Vista principal de reportes"""
+    template_name = 'reportes/reportes.html'
+    
+    def test_func(self):
+        return self.request.user.is_supervisor() or self.request.user.is_admin()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['puede_generar'] = True
+        return context
+
+
+# ======== REPORTE DE MATERIALES ========
+
+@login_required
+@user_passes_test(lambda u: u.is_supervisor() or u.is_admin())
+def reporte_materiales(request):
+    """Genera reporte de materiales"""
+    formato = request.GET.get('formato', 'html')
+    
+    # Obtener datos
+    materiales = Material.objects.select_related('codigo_tipo', 'codigo_marca').all()
+    
+    # Estadísticas
+    total_materiales = materiales.count()
+    valor_total = materiales.aggregate(Sum('precio_material'))['precio_material__sum'] or 0
+    
+    if formato == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_materiales.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Código', 'Nombre', 'Tipo', 'Marca', 'Precio'])
+        
+        for material in materiales:
+            writer.writerow([
+                material.codigo_material,
+                material.nombre_material,
+                material.codigo_tipo.nombre_tipo if material.codigo_tipo else '',
+                material.codigo_marca.nombre_marca if material.codigo_marca else '',
+                material.precio_material
+            ])
+        
+        return response
+    
+    # Formato HTML
+    context = {
+        'materiales': materiales,
+        'total_materiales': total_materiales,
+        'valor_total': valor_total,
+        'fecha_generacion': timezone.now()
+    }
+    return render(request, 'reportes/reporte_materiales.html', context)
+
+
+# ======== REPORTE DE PRÉSTAMOS ========
+
+@login_required
+@user_passes_test(lambda u: u.is_supervisor() or u.is_admin())
+def reporte_prestamos(request):
+    """Genera reporte de préstamos"""
+    formato = request.GET.get('formato', 'html')
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    estado = request.GET.get('estado', 'todos')
+    
+    # Filtrar préstamos
+    prestamos = PrestamoMaterial.objects.select_related(
+        'id_obrero', 'codigo_material'
+    ).all()
+    
+    if fecha_inicio:
+        prestamos = prestamos.filter(fecha_prestamo__gte=fecha_inicio)
+    if fecha_fin:
+        prestamos = prestamos.filter(fecha_prestamo__lte=fecha_fin)
+    if estado == 'pendientes':
+        prestamos = prestamos.filter(devuelto=False)
+    elif estado == 'devueltos':
+        prestamos = prestamos.filter(devuelto=True)
+    
+    # Estadísticas
+    total_prestamos = prestamos.count()
+    pendientes = prestamos.filter(devuelto=False).count()
+    devueltos = prestamos.filter(devuelto=True).count()
+    
+    if formato == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_prestamos.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Código', 'Obrero', 'Material', 'Cantidad', 'Fecha Préstamo', 'Estado'])
+        
+        for prestamo in prestamos:
+            writer.writerow([
+                prestamo.codigo_prestamo,
+                str(prestamo.id_obrero),
+                prestamo.codigo_material.nombre_material,
+                prestamo.cantidad_prestada,
+                prestamo.fecha_prestamo.strftime('%d/%m/%Y'),
+                'Devuelto' if prestamo.devuelto else 'Pendiente'
+            ])
+        
+        return response
+    
+    context = {
+        'prestamos': prestamos,
+        'total_prestamos': total_prestamos,
+        'pendientes': pendientes,
+        'devueltos': devueltos,
+        'fecha_generacion': timezone.now(),
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin
+    }
+    return render(request, 'reportes/reporte_prestamos.html', context)
+
+
+# ======== REPORTE DE OBREROS ========
+
+@login_required
+@user_passes_test(lambda u: u.is_supervisor() or u.is_admin())
+def reporte_obreros(request):
+    """Genera reporte de obreros"""
+    formato = request.GET.get('formato', 'html')
+    
+    obreros = Obrero.objects.select_related('codigo_cargo', 'codigo_obra').all()
+    
+    # Estadísticas
+    total_obreros = obreros.count()
+    por_cargo = obreros.values('codigo_cargo__nombre_cargo').annotate(
+        total=Count('id_obrero')
+    )
+    por_obra = obreros.values('codigo_obra__nombre_obra').annotate(
+        total=Count('id_obrero')
+    )
+    
+    if formato == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_obreros.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Nombre', 'Apellido', 'Cargo', 'Obra'])
+        
+        for obrero in obreros:
+            writer.writerow([
+                obrero.id_obrero,
+                obrero.nombre_obrero,
+                obrero.apellido_obrero,
+                obrero.codigo_cargo.nombre_cargo if obrero.codigo_cargo else '',
+                obrero.codigo_obra.nombre_obra if obrero.codigo_obra else ''
+            ])
+        
+        return response
+    
+    context = {
+        'obreros': obreros,
+        'total_obreros': total_obreros,
+        'por_cargo': por_cargo,
+        'por_obra': por_obra,
+        'fecha_generacion': timezone.now()
+    }
+    return render(request, 'reportes/reporte_obreros.html', context)
+
+
+# ======== REPORTE DE MERMAS ========
+
+@login_required
+@user_passes_test(lambda u: u.is_supervisor() or u.is_admin())
+def reporte_mermas(request):
+    """Genera reporte de mermas en devoluciones"""
+    formato = request.GET.get('formato', 'html')
+    fecha_inicio = request.GET.get('fecha_inicio')
+    fecha_fin = request.GET.get('fecha_fin')
+    
+    devoluciones = DevolucionMaterial.objects.select_related(
+        'codigo_prestamo__codigo_material',
+        'codigo_prestamo__id_obrero'
+    ).filter(merma__gt=0)
+    
+    if fecha_inicio:
+        devoluciones = devoluciones.filter(fecha_devolucion__gte=fecha_inicio)
+    if fecha_fin:
+        devoluciones = devoluciones.filter(fecha_devolucion__lte=fecha_fin)
+    
+    # Estadísticas
+    total_merma = devoluciones.aggregate(Sum('merma'))['merma__sum'] or 0
+    total_devoluciones = devoluciones.count()
+    
+    if formato == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reporte_mermas.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['Código', 'Material', 'Obrero', 'Prestado', 'Devuelto', 'Merma', 'Fecha'])
+        
+        for dev in devoluciones:
+            writer.writerow([
+                dev.codigo_devolucion,
+                dev.codigo_prestamo.codigo_material.nombre_material,
+                str(dev.codigo_prestamo.id_obrero),
+                dev.codigo_prestamo.cantidad_prestada,
+                dev.cantidad_devuelta,
+                dev.merma,
+                dev.fecha_devolucion.strftime('%d/%m/%Y')
+            ])
+        
+        return response
+    
+    context = {
+        'devoluciones': devoluciones,
+        'total_merma': total_merma,
+        'total_devoluciones': total_devoluciones,
+        'fecha_generacion': timezone.now(),
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin
+    }
+    return render(request, 'reportes/reporte_mermas.html', context)
+
+
+# ======== REPORTE GENERAL/DASHBOARD ========
+
+@login_required
+@user_passes_test(lambda u: u.is_supervisor() or u.is_admin())
+def reporte_general(request):
+    """Genera reporte general del sistema"""
+    
+    # Estadísticas generales
+    stats = {
+        'obras': Obra.objects.count(),
+        'obreros': Obrero.objects.count(),
+        'materiales': Material.objects.count(),
+        'herramientas': Herramienta.objects.count(),
+        'bodegas': Bodega.objects.count(),
+        'prestamos_materiales': PrestamoMaterial.objects.count(),
+        'prestamos_herramientas': PrestamoHerramienta.objects.count(),
+        'prestamos_pendientes': PrestamoMaterial.objects.filter(devuelto=False).count(),
+        'valor_materiales': Material.objects.aggregate(Sum('precio_material'))['precio_material__sum'] or 0,
+        'valor_herramientas': Herramienta.objects.aggregate(Sum('precio_herramienta'))['precio_herramienta__sum'] or 0,
+    }
+    
+    # Préstamos recientes
+    prestamos_recientes = PrestamoMaterial.objects.select_related(
+        'id_obrero', 'codigo_material'
+    ).order_by('-fecha_prestamo')[:10]
+    
+    # Devoluciones con merma
+    mermas_recientes = DevolucionMaterial.objects.filter(
+        merma__gt=0
+    ).select_related(
+        'codigo_prestamo__codigo_material'
+    ).order_by('-fecha_devolucion')[:10]
+    
+    context = {
+        'stats': stats,
+        'prestamos_recientes': prestamos_recientes,
+        'mermas_recientes': mermas_recientes,
+        'fecha_generacion': timezone.now()
+    }
+    return render(request, 'reportes/reporte_general.html', context)
+
+
+# ======== GESTIÓN DE INFORMES (SUPERVISOR) ========
+
+class InformeListView(SupervisorRequiredMixin, ListView):
+    model = Informe
+    template_name = 'supervisor/informe_list.html'
+    context_object_name = 'informes'
+    paginate_by = 10
+    
+    def get_queryset(self):
+        queryset = Informe.objects.select_related('id_supervisor').all()
+        
+        # Si es supervisor, solo ver sus propios informes
+        if self.request.user.is_supervisor() and self.request.user.supervisor:
+            queryset = queryset.filter(id_supervisor=self.request.user.supervisor)
+        
+        return queryset.order_by('-fecha_informe')
+
+
+class InformeCreateView(SupervisorRequiredMixin, CreateView):
+    model = Informe
+    template_name = 'supervisor/informe_form.html'
+    fields = ['titulo_informe',  'descripcion']
+    success_url = reverse_lazy('informe_list')
+    
+    def form_valid(self, form):
+        # Asignar el supervisor automáticamente
+        if self.request.user.supervisor:
+            form.instance.id_supervisor = self.request.user.supervisor
+        else:
+            messages.error(self.request, 'No tienes un perfil de supervisor asignado.')
+            return self.form_invalid(form)
+        
+        messages.success(self.request, 'Informe creado exitosamente.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Crear Informe'
+        context['button_text'] = 'Crear'
+        return context
+
+
+class InformeDetailView(SupervisorRequiredMixin, DetailView):
+    model = Informe
+    template_name = 'supervisor/informe_detail.html'
+    context_object_name = 'informe'
+    pk_url_kwarg = 'pk'
+
+
+class InformeUpdateView(SupervisorRequiredMixin, UpdateView):
+    model = Informe
+    template_name = 'supervisor/informe_form.html'
+    fields = ['titulo_informe', 'fecha_informe', 'descripcion']
+    success_url = reverse_lazy('informe_list')
+    pk_url_kwarg = 'pk'
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Informe actualizado exitosamente.')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Editar Informe'
+        context['button_text'] = 'Actualizar'
+        return context
+
+
+class InformeDeleteView(SupervisorRequiredMixin, DeleteView):
+    model = Informe
+    template_name = 'supervisor/informe_confirm_delete.html'
+    success_url = reverse_lazy('informe_list')
+    pk_url_kwarg = 'pk'
+    context_object_name = 'informe'
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Informe eliminado exitosamente.')
+        return super().delete(request, *args, **kwargs)

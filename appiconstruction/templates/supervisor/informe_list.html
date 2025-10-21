@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis Informes{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2"><i class="bi bi-journal-text"></i> Mis Informes</h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'informe_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Informe
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if informes %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Fecha</th>
+                        <th>Supervisor</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for informe in informes %}
+                    <tr>
+                        <td><strong>{{ informe.titulo_informe }}</strong></td>
+                        <td>{{ informe.fecha_informe|date:"d/m/Y" }}</td>
+                        <td>{{ informe.id_supervisor }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{% url 'informe_detail' informe.codigo_informe %}" 
+                                   class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'informe_update' informe.codigo_informe %}" 
+                                   class="btn btn-sm btn-outline-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'informe_delete' informe.codigo_informe %}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+            <p class="text-muted mt-3">No hay informes registrados.</p>
+            <a href="{% url 'informe_create' %}" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-circle"></i> Crear primer informe
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

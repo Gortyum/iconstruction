@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Reporte General{% endblock %}
+
+{% block content %}
+<div class="text-end mb-3">
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="bi bi-printer"></i> Imprimir
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Reporte General del Sistema</h4>
+        <small>Generado el: {{ fecha_generacion|date:"d/m/Y H:i" }}</small>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 text-center mb-3">
+                <h2 class="text-primary">{{ stats.obras }}</h2>
+                <p>Obras</p>
+            </div>
+            <div class="col-md-3 text-center mb-3">
+                <h2 class="text-success">{{ stats.obreros }}</h2>
+                <p>Obreros</p>
+            </div>
+            <div class="col-md-3 text-center mb-3">
+                <h2 class="text-info">{{ stats.materiales }}</h2>
+                <p>Materiales</p>
+            </div>
+            <div class="col-md-3 text-center mb-3">
+                <h2 class="text-warning">{{ stats.herramientas }}</h2>
+                <p>Herramientas</p>
+            </div>
+        </div>
+        <hr>
+        <h5>Valores de Inventario</h5>
+        <p><strong>Materiales:</strong> ${{ stats.valor_materiales|floatformat:2 }}</p>
+        <p><strong>Herramientas:</strong> ${{ stats.valor_herramientas|floatformat:2 }}</p>
+        <p><strong>Total:</strong> ${{ stats.valor_materiales|add:stats.valor_herramientas|floatformat:2 }}</p>
+    </div>
+</div>
+{% endblock %}

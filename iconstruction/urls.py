@@ -54,6 +54,14 @@ from appiconstruction.views import (
     # Préstamos de Herramientas
     PrestamoHerramientaListView, PrestamoHerramientaCreateView,
     PrestamoHerramientaDetailView, DevolucionHerramientaView,
+
+     # Supervisor
+    SupervisorDashboardView, InformeListView, InformeCreateView,
+    InformeDetailView, InformeUpdateView, InformeDeleteView,
+    
+    # Reportes
+    ReportesView, reporte_materiales, reporte_prestamos,
+    reporte_obreros, reporte_mermas, reporte_general,
 )
 
 
@@ -125,5 +133,23 @@ urlpatterns = [
     path('prestamos-herramientas/crear/', PrestamoHerramientaCreateView.as_view(), name='prestamo_herramienta_create'),
     path('prestamos-herramientas/<int:pk>/', PrestamoHerramientaDetailView.as_view(), name='prestamo_herramienta_detail'),
     path('prestamos-herramientas/<int:pk>/devolver/', DevolucionHerramientaView.as_view(), name='devolucion_herramienta_create'),
+
+    # ========== SUPERVISOR ==========
+    path('supervisor/dashboard/', SupervisorDashboardView.as_view(), name='supervisor_dashboard'),
+    
+    # ========== INFORMES ==========
+    path('informes/', InformeListView.as_view(), name='informe_list'),
+    path('informes/crear/', InformeCreateView.as_view(), name='informe_create'),
+    path('informes/<int:pk>/', InformeDetailView.as_view(), name='informe_detail'),
+    path('informes/<int:pk>/editar/', InformeUpdateView.as_view(), name='informe_update'),
+    path('informes/<int:pk>/eliminar/', InformeDeleteView.as_view(), name='informe_delete'),
+    
+    # ========== REPORTES ==========
+    path('reportes/', ReportesView.as_view(), name='reportes'),
+    path('reportes/materiales/', reporte_materiales, name='reporte_materiales'),
+    path('reportes/prestamos/', reporte_prestamos, name='reporte_prestamos'),
+    path('reportes/obreros/', reporte_obreros, name='reporte_obreros'),
+    path('reportes/mermas/', reporte_mermas, name='reporte_mermas'),
+    path('reportes/general/', reporte_general, name='reporte_general'),
     
 ]

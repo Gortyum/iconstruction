@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+
+{% block title %}Préstamos de Herramientas{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-tools"></i> Préstamos de Herramientas
+        </h1>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'prestamo_herramienta_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Préstamo
+        </a>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Estado</label>
+                <select name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="pendiente" {% if estado_selected == 'pendiente' %}selected{% endif %}>
+                        Pendientes
+                    </option>
+                    <option value="devuelto" {% if estado_selected == 'devuelto' %}selected{% endif %}>
+                        Devueltos
+                    </option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Obrero</label>
+                <select name="obrero" class="form-select">
+                    <option value="">Todos</option>
+                    {% for obrero in obreros %}
+                    <option value="{{ obrero.id_obrero }}" 
+                            {% if obrero_selected|stringformat:"s" == obrero.id_obrero|stringformat:"s" %}selected{% endif %}>
+                        {{ obrero }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Préstamos -->
+<div class="card">
+    <div class="card-body">
+        {% if prestamos %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Obrero</th>
+                        <th>Herramienta</th>
+                        <th>Fecha Préstamo</th>
+                        <th>Estado al Prestar</th>
+                        <th>Estado</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prestamo in prestamos %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ prestamo.codigo_prestamo }}</span></td>
+                        <td><strong>{{ prestamo.id_obrero }}</strong></td>
+                        <td>{{ prestamo.codigo_herramienta.nombre_herramienta }}</td>
+                        <td>{{ prestamo.fecha_prestamo|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            {% if prestamo.estado_al_prestar %}
+                                <span class="badge bg-info">{{ prestamo.estado_al_prestar }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if prestamo.devuelto %}
+                                <span class="badge bg-success">Devuelto</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'prestamo_herramienta_detail' prestamo.codigo_prestamo %}" 
+                                   class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if not prestamo.devuelto and user.is_bodeguero %}
+                                <a href="{% url 'devolucion_herramienta_create' prestamo.codigo_prestamo %}" 
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-arrow-return-left"></i> Devolver
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        {% if is_paginated %}
+        <nav aria-label="Paginación">
+            <ul class="pagination justify-content-center mb-0">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+                </li>
+                {% endif %}
+                <li class="page-item active">
+                    <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 4rem; color: #dee2e6;"></i>
+            <p class="text-muted mt-3">No hay préstamos de herramientas registrados.</p>
+            <a href="{% url 'prestamo_herramienta_create' %}" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-circle"></i> Registrar primer préstamo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Estadísticas -->
+{% if prestamos %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card text-center bg-warning text-dark">
+            <div class="card-body">
+                <h3>{{ prestamos|length }}</h3>
+                <p class="mb-0">Préstamos en esta página</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <h3>-</h3>
+                <p class="mb-0">Ver todos</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

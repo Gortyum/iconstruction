@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Reportes del Sistema{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-file-earmark-bar-graph"></i> Centro de Reportes
+        </h1>
+        <p class="text-muted">Generación y exportación de reportes del sistema</p>
+    </div>
+</div>
+
+<!-- Reporte General -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">
+            <i class="bi bi-speedometer2"></i> Reporte General
+        </h5>
+    </div>
+    <div class="card-body">
+        <p>Visión general del estado actual del sistema con todas las estadísticas principales.</p>
+        <a href="{% url 'reporte_general' %}" class="btn btn-primary" target="_blank">
+            <i class="bi bi-eye"></i> Ver Reporte
+        </a>
+    </div>
+</div>
+
+<!-- Reportes Disponibles -->
+<div class="row">
+    <!-- Reporte de Materiales -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-seam"></i> Reporte de Materiales
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Listado completo de materiales con precios, tipos y marcas.</p>
+                <p class="mb-0"><strong>Incluye:</strong></p>
+                <ul>
+                    <li>Inventario de materiales</li>
+                    <li>Valor total de inventario</li>
+                    <li>Clasificación por tipo y marca</li>
+                </ul>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'reporte_materiales' %}" class="btn btn-info" target="_blank">
+                        <i class="bi bi-eye"></i> Ver
+                    </a>
+                    <a href="{% url 'reporte_materiales' %}?formato=csv" class="btn btn-outline-info">
+                        <i class="bi bi-download"></i> CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Préstamos -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Reporte de Préstamos
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Registro detallado de todos los préstamos de materiales.</p>
+                <form method="get" action="{% url 'reporte_prestamos' %}" target="_blank">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Fecha Inicio</label>
+                            <input type="date" name="fecha_inicio" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Fecha Fin</label>
+                            <input type="date" name="fecha_fin" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Estado</label>
+                        <select name="estado" class="form-select form-select-sm">
+                            <option value="todos">Todos</option>
+                            <option value="pendientes">Pendientes</option>
+                            <option value="devueltos">Devueltos</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100 mb-2">
+                        <i class="bi bi-eye"></i> Ver Reporte
+                    </button>
+                    <button type="submit" name="formato" value="csv" class="btn btn-outline-warning w-100">
+                        <i class="bi bi-download"></i> Descargar CSV
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Obreros -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> Reporte de Obreros
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Listado de obreros con sus cargos y obras asignadas.</p>
+                <p class="mb-0"><strong>Incluye:</strong></p>
+                <ul>
+                    <li>Total de obreros</li>
+                    <li>Distribución por cargo</li>
+                    <li>Distribución por obra</li>
+                </ul>
+            </div>
+            <div class="card-footer">
+                <div class="btn-group w-100" role="group">
+                    <a href="{% url 'reporte_obreros' %}" class="btn btn-success" target="_blank">
+                        <i class="bi bi-eye"></i> Ver
+                    </a>
+                    <a href="{% url 'reporte_obreros' %}?formato=csv" class="btn btn-outline-success">
+                        <i class="bi bi-download"></i> CSV
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Mermas -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Reporte de Mermas
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Análisis de mermas en devoluciones de materiales.</p>
+                <form method="get" action="{% url 'reporte_mermas' %}" target="_blank">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">Fecha Inicio</label>
+                            <input type="date" name="fecha_inicio" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">Fecha Fin</label>
+                            <input type="date" name="fecha_fin" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-danger w-100 mb-2">
+                        <i class="bi bi-eye"></i> Ver Reporte
+                    </button>
+                    <button type="submit" name="formato" value="csv" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-download"></i> Descargar CSV
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Información -->
+<div class="card">
+    <div class="card-body">
+        <h6 class="card-title">
+            <i class="bi bi-info-circle text-info"></i> Información sobre Reportes
+        </h6>
+        <ul class="mb-0 small">
+            <li>Los reportes se generan en tiempo real con los datos actuales del sistema.</li>
+            <li>Puede exportar los reportes en formato CSV para análisis en Excel.</li>
+            <li>Los reportes con filtros de fecha permiten análisis de períodos específicos.</li>
+            <li>Todos los reportes incluyen la fecha y hora de generación.</li>
+        </ul>
+    </div>
+</div>
+
+{% endblock %}

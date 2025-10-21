@@ -7,11 +7,11 @@ from django.utils import timezone
 class Usuario(AbstractUser):
     """
     Modelo de usuario personalizado con roles
-    DEBE IR PRIMERO ANTES DE CUALQUIER OTRO MODELO
     """
     ROLES = (
         ('ADMIN', 'Administrador'),
         ('BODEGUERO', 'Bodeguero'),
+        ('SUPERVISOR', 'Supervisor'),
     )
     
     rol = models.CharField(max_length=20, choices=ROLES, default='BODEGUERO')
@@ -20,7 +20,14 @@ class Usuario(AbstractUser):
     fecha_contratacion = models.DateField(null=True, blank=True)
     activo = models.BooleanField(default=True)
     
-    # NO incluir relación con Bodeguero aquí para evitar circular import
+    # Relación opcional con supervisor (si es supervisor)
+    supervisor = models.OneToOneField(
+        'Supervisor',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='usuario_sistema'
+    )
     
     class Meta:
         verbose_name = 'Usuario'
@@ -35,6 +42,9 @@ class Usuario(AbstractUser):
     def is_bodeguero(self):
         return self.rol == 'BODEGUERO'
     
+    def is_supervisor(self):
+        return self.rol == 'SUPERVISOR'
+    
     def get_permisos(self):
         """Retorna los permisos según el rol"""
         if self.is_admin():
@@ -45,6 +55,7 @@ class Usuario(AbstractUser):
                 'materiales': ['view'],
                 'herramientas': ['view'],
                 'prestamos': ['view'],
+                'reportes': ['view', 'export'],
             }
         elif self.is_bodeguero():
             return {
@@ -54,7 +65,19 @@ class Usuario(AbstractUser):
                 'bodegas': ['view'],
                 'obreros': ['view'],
             }
+        elif self.is_supervisor():
+            return {
+                'obras': ['view'],
+                'obreros': ['view'],
+                'materiales': ['view'],
+                'herramientas': ['view'],
+                'prestamos': ['view'],
+                'bodegas': ['view'],
+                'reportes': ['view', 'add', 'export'],
+                'informes': ['view', 'add', 'change', 'delete'],
+            }
         return {}
+
 
 
 # ======== COMUNAS, ESTADOS Y CATEGORÍAS ========
@@ -127,7 +150,7 @@ class Supervisor(models.Model):
 class Informe(models.Model):
     codigo_informe = models.AutoField(primary_key=True)
     titulo_informe = models.CharField(max_length=250)
-    fecha_informe = models.DateField()
+    fecha_informe = models.DateTimeField(auto_now=True)
     descripcion = models.TextField(blank=True)
     id_supervisor = models.ForeignKey(Supervisor, on_delete=models.PROTECT, related_name="informes")
 
@@ -405,6 +428,7 @@ class SesionUsuario(models.Model):
         return f"Sesión {self.usuario.username} - {self.fecha_inicio}"
 
 
+
 # ======== LOG DE ACTIVIDADES ========
 
 class LogActividad(models.Model):
@@ -437,3 +461,4 @@ class LogActividad(models.Model):
     
     def __str__(self):
         return f"{self.usuario} - {self.get_accion_display()} - {self.fecha}"
+

@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+
+{% block title %}Préstamo #{{ prestamo.codigo_prestamo }} - Detalle{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'prestamo_material_list' %}">Préstamos de Materiales</a>
+                </li>
+                <li class="breadcrumb-item active">Préstamo #{{ prestamo.codigo_prestamo }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información del Préstamo -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-arrow-right"></i> Información del Préstamo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Código de Préstamo</h6>
+                        <p class="mb-0">
+                            <span class="badge bg-secondary fs-6">{{ prestamo.codigo_prestamo }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Estado</h6>
+                        <p class="mb-0">
+                            {% if prestamo.devuelto %}
+                                <span class="badge bg-success fs-6">Devuelto</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark fs-6">Pendiente</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Obrero</h6>
+                        <p class="mb-0">
+                            <strong>{{ prestamo.id_obrero }}</strong>
+                            {% if prestamo.id_obrero.codigo_cargo %}
+                                <br><small class="text-muted">{{ prestamo.id_obrero.codigo_cargo }}</small>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Material</h6>
+                        <p class="mb-0">
+                            <strong>{{ prestamo.codigo_material.nombre_material }}</strong>
+                            <br><small class="text-muted">Precio: ${{ prestamo.codigo_material.precio_material|floatformat:2 }}</small>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Cantidad Prestada</h6>
+                        <p class="mb-0 fs-4 text-primary">
+                            <strong>{{ prestamo.cantidad_prestada|floatformat:2 }}</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Fecha de Préstamo</h6>
+                        <p class="mb-0">{{ prestamo.fecha_prestamo|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Fecha Devolución Esperada</h6>
+                        <p class="mb-0">
+                            {% if prestamo.fecha_devolucion_esperada %}
+                                {{ prestamo.fecha_devolucion_esperada|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="text-muted">No especificada</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                {% if prestamo.observaciones %}
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-2">Observaciones del Préstamo</h6>
+                        <div class="alert alert-info">
+                            {{ prestamo.observaciones }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Devoluciones -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-return-left"></i> Devoluciones
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if devoluciones %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th class="text-end">Devuelto</th>
+                                <th class="text-end">Usado</th>
+                                <th class="text-end">Merma</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for devolucion in devoluciones %}
+                            <tr>
+                                <td><span class="badge bg-secondary">{{ devolucion.codigo_devolucion }}</span></td>
+                                <td class="text-end">
+                                    <span class="badge bg-success">{{ devolucion.cantidad_devuelta|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-info">{{ devolucion.cantidad_usada|floatformat:2 }}</span>
+                                </td>
+                                <td class="text-end">
+                                    <span class="badge bg-warning text-dark">{{ devolucion.merma|floatformat:2 }}</span>
+                                </td>
+                                <td>{{ devolucion.fecha_devolucion|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                            {% if devolucion.observaciones %}
+                            <tr>
+                                <td colspan="5">
+                                    <small class="text-muted">
+                                        <strong>Observaciones:</strong> {{ devolucion.observaciones }}
+                                    </small>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-info-circle text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3 mb-0">No hay devoluciones registradas para este préstamo.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i> Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if not prestamo.devuelto and user.is_bodeguero %}
+                    <a href="{% url 'devolucion_material_create' prestamo.codigo_prestamo %}" 
+                       class="btn btn-success">
+                        <i class="bi bi-arrow-return-left"></i> Registrar Devolución
+                    </a>
+                    <hr>
+                    {% endif %}
+                    
+                    <a href="{% url 'prestamo_material_list' %}" 
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al Listado
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-calculator"></i> Resumen
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-7">Cantidad Prestada:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-primary">{{ prestamo.cantidad_prestada|floatformat:2 }}</span>
+                    </dd>
+                    
+                    {% if prestamo.devuelto and devoluciones %}
+                    {% with ultima_devolucion=devoluciones.first %}
+                    <dt class="col-sm-7">Cantidad Devuelta:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-success">{{ ultima_devolucion.cantidad_devuelta|floatformat:2 }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-7">Cantidad Usada:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-info">{{ ultima_devolucion.cantidad_usada|floatformat:2 }}</span>
+                    </dd>
+                    
+                    <dt class="col-sm-7">Merma:</dt>
+                    <dd class="col-sm-5 text-end">
+                        <span class="badge bg-warning text-dark">{{ ultima_devolucion.merma|floatformat:2 }}</span>
+                    </dd>
+                    {% endwith %}
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <!-- Información del Material -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-box-seam"></i> Material
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ prestamo.codigo_material.nombre_material }}</h6>
+                <hr>
+                <dl class="row mb-0 small">
+                    <dt class="col-6">Precio:</dt>
+                    <dd class="col-6 text-end">${{ prestamo.codigo_material.precio_material|floatformat:2 }}</dd>
+                    
+                    {% if prestamo.codigo_material.codigo_tipo %}
+                    <dt class="col-6">Tipo:</dt>
+                    <dd class="col-6 text-end">{{ prestamo.codigo_material.codigo_tipo }}</dd>
+                    {% endif %}
+                    
+                    {% if prestamo.codigo_material.codigo_marca %}
+                    <dt class="col-6">Marca:</dt>
+                    <dd class="col-6 text-end">{{ prestamo.codigo_material.codigo_marca }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

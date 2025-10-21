@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Supervisor{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-clipboard-data"></i> Dashboard Supervisor
+        </h1>
+        <p class="text-muted">
+            Bienvenido, <strong>{{ user.get_full_name }}</strong> 
+            <span class="badge bg-info">{{ user.get_rol_display }}</span>
+        </p>
+    </div>
+</div>
+
+<!-- Estadísticas Principales -->
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-building text-primary" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_obras }}</h3>
+                <p class="text-muted mb-0">Obras</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-people text-success" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_obreros }}</h3>
+                <p class="text-muted mb-0">Obreros</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="bi bi-box-seam text-info" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_materiales }}</h3>
+                <p class="text-muted mb-0">Materiales</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-tools text-warning" style="font-size: 3rem;"></i>
+                <h3 class="mt-3">{{ total_herramientas }}</h3>
+                <p class="text-muted mb-0">Herramientas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Préstamos Activos -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Préstamos Activos
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h2 class="text-primary">{{ prestamos_materiales_activos }}</h2>
+                        <p class="text-muted">Materiales</p>
+                    </div>
+                    <div class="col-6">
+                        <h2 class="text-success">{{ prestamos_herramientas_activos }}</h2>
+                        <p class="text-muted">Herramientas</p>
+                    </div>
+                </div>
+                <hr>
+                
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-file-earmark-text"></i> Acciones Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'reportes' %}" class="btn btn-info">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Generar Reportes
+                    </a>
+                    <a href="{% url 'informe_create' %}" class="btn btn-outline-info">
+                        <i class="bi bi-plus-circle"></i> Crear Informe
+                    </a>
+                    <a href="{% url 'informe_list' %}" class="btn btn-outline-info">
+                        <i class="bi bi-list"></i> Mis Informes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mis Informes Recientes -->
+{% if mis_informes %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-journal-text"></i> Mis Informes Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for informe in mis_informes %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ informe.titulo_informe }}</h6>
+                                <small class="text-muted">{{ informe.fecha_informe|date:"d/m/Y" }}</small>
+                            </div>
+                            <a href="{% url 'informe_detail' informe.codigo_informe %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'informe_list' %}" class="btn btn-sm btn-outline-primary">
+                        Ver Todos los Informes
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Ayuda -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle text-info"></i> Funciones del Supervisor
+                </h6>
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6 class="text-primary">Reportes</h6>
+                        <ul class="small">
+                            <li>Generar reportes del sistema</li>
+                            <li>Exportar datos a CSV</li>
+                            <li>Análisis de mermas</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-success">Informes</h6>
+                        <ul class="small">
+                            <li>Crear informes de seguimiento</li>
+                            <li>Documentar hallazgos</li>
+                            <li>Historial de informes</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-4">
+                        <h6 class="text-warning">Consultas</h6>
+                        <ul class="small">
+                            <li>Ver inventarios</li>
+                            <li>Revisar préstamos</li>
+                            <li>Consultar personal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block title %}Préstamo #{{ prestamo.codigo_prestamo }} - Detalle{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{% url 'prestamo_herramienta_list' %}">Préstamos de Herramientas</a>
+                </li>
+                <li class="breadcrumb-item active">Préstamo #{{ prestamo.codigo_prestamo }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información del Préstamo -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-tools"></i> Información del Préstamo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Código de Préstamo</h6>
+                        <p class="mb-0">
+                            <span class="badge bg-secondary fs-6">{{ prestamo.codigo_prestamo }}</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Estado</h6>
+                        <p class="mb-0">
+                            {% if prestamo.devuelto %}
+                                <span class="badge bg-success fs-6">Devuelto</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark fs-6">Pendiente</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Obrero</h6>
+                        <p class="mb-0">
+                            <strong>{{ prestamo.id_obrero }}</strong>
+                            {% if prestamo.id_obrero.codigo_cargo %}
+                                <br><small class="text-muted">{{ prestamo.id_obrero.codigo_cargo }}</small>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Herramienta</h6>
+                        <p class="mb-0">
+                            <strong>{{ prestamo.codigo_herramienta.nombre_herramienta }}</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Fecha de Préstamo</h6>
+                        <p class="mb-0">{{ prestamo.fecha_prestamo|date:"d/m/Y H:i" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Fecha Devolución Esperada</h6>
+                        <p class="mb-0">
+                            {% if prestamo.fecha_devolucion_esperada %}
+                                {{ prestamo.fecha_devolucion_esperada|date:"d/m/Y" }}
+                            {% else %}
+                                <span class="text-muted">No especificada</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Estado al Prestar</h6>
+                        <p class="mb-0">
+                            {% if prestamo.estado_al_prestar %}
+                                <span class="badge bg-info">{{ prestamo.estado_al_prestar }}</span>
+                            {% else %}
+                                <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if prestamo.devuelto %}
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Estado al Devolver</h6>
+                        <p class="mb-0">
+                            {% if prestamo.estado_al_devolver %}
+                                <span class="badge bg-success">{{ prestamo.estado_al_devolver }}</span>
+                            {% else %}
+                                <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if prestamo.observaciones_prestamo %}
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-2">Observaciones del Préstamo</h6>
+                        <div class="alert alert-info">
+                            {{ prestamo.observaciones_prestamo }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if prestamo.devuelto and prestamo.observaciones_devolucion %}
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-muted mb-2">Observaciones de la Devolución</h6>
+                        <div class="alert alert-success">
+                            {{ prestamo.observaciones_devolucion }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i> Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    {% if not prestamo.devuelto and user.is_bodeguero %}
+                    <a href="{% url 'devolucion_herramienta_create' prestamo.codigo_prestamo %}" 
+                       class="btn btn-success">
+                        <i class="bi bi-arrow-return-left"></i> Registrar Devolución
+                    </a>
+                    <hr>
+                    {% endif %}
+                    
+                    <a href="{% url 'prestamo_herramienta_list' %}" 
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al Listado
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información de la Herramienta -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-tools"></i> Herramienta
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ prestamo.codigo_herramienta.nombre_herramienta }}</h6>
+                <hr>
+                <dl class="row mb-0 small">
+                    <dt class="col-6">Precio:</dt>
+                    <dd class="col-6 text-end">${{ prestamo.codigo_herramienta.precio_herramienta|floatformat:2 }}</dd>
+                    
+                    {% if prestamo.codigo_herramienta.codigo_tipo %}
+                    <dt class="col-6">Tipo:</dt>
+                    <dd class="col-6 text-end">{{ prestamo.codigo_herramienta.codigo_tipo }}</dd>
+                    {% endif %}
+                    
+                    {% if prestamo.codigo_herramienta.codigo_marca %}
+                    <dt class="col-6">Marca:</dt>
+                    <dd class="col-6 text-end">{{ prestamo.codigo_herramienta.codigo_marca }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        {% if prestamo.devuelto %}
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Historial
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3">
+                        <i class="bi bi-arrow-right text-warning"></i>
+                        <strong>Prestado:</strong><br>
+                        <small>{{ prestamo.fecha_prestamo|date:"d/m/Y H:i" }}</small>
+                    </li>
+                    <li>
+                        <i class="bi bi-arrow-left text-success"></i>
+                        <strong>Devuelto:</strong><br>
+                        <small>{{ prestamo.fecha_devolucion_real|date:"d/m/Y H:i" }}</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
