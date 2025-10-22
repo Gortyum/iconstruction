@@ -103,11 +103,12 @@
                                 {% csrf_token %}
                                 <select name="rol" class="form-select form-select-sm" 
                                         {% if usuario == user %}disabled{% endif %}>
-                                    <option value="ADMIN" {% if usuario.rol == 'ADMIN' %}selected{% endif %}>
-                                        Administrador
-                                    </option>
+                                    
                                     <option value="BODEGUERO" {% if usuario.rol == 'BODEGUERO' %}selected{% endif %}>
                                         Bodeguero
+                                    </option>
+                                    <option value="SUPERVISOR" {% if usuario.rol == 'SUPERVISOR' %}selected{% endif %}>
+                                        Supervisor
                                     </option>
                                 </select>
                             </form>

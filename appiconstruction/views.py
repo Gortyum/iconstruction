@@ -1006,7 +1006,7 @@ def cambiar_rol_usuario(request, user_id):
     
     if request.method == 'POST':
         nuevo_rol = request.POST.get('rol')
-        if nuevo_rol in ['ADMIN', 'BODEGUERO']:
+        if nuevo_rol in ['ADMIN', 'BODEGUERO', 'SUPERVISOR']:
             usuario.rol = nuevo_rol
             usuario.save()
             

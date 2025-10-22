@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="h2">
+            <i class="bi bi-person-circle"></i> Mi Perfil
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Información Personal -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-person"></i> Información Personal
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Nombre Completo</h6>
+                        <p class="mb-0 fs-5">
+                            <strong>{{ usuario.get_full_name }}</strong>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Usuario</h6>
+                        <p class="mb-0">
+                            <span class="badge bg-secondary fs-6">{{ usuario.username }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Correo Electrónico</h6>
+                        <p class="mb-0">{{ usuario.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Rol en el Sistema</h6>
+                        <p class="mb-0">
+                            <span class="badge bg-primary fs-6">{{ usuario.get_rol_display }}</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    {% if usuario.telefono %}
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Teléfono</h6>
+                        <p class="mb-0">{{ usuario.telefono }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if usuario.rut %}
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">RUT</h6>
+                        <p class="mb-0">{{ usuario.rut }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Miembro desde</h6>
+                        <p class="mb-0">{{ usuario.date_joined|date:"d/m/Y" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-muted mb-2">Último acceso</h6>
+                        <p class="mb-0">
+                            {% if usuario.last_login %}
+                                {{ usuario.last_login|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Nunca</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actividades Recientes -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-activity"></i> Mis Actividades Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if actividades_recientes %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Acción</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for actividad in actividades_recientes %}
+                            <tr>
+                                <td>{{ actividad.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ actividad.get_accion_display }}</span>
+                                </td>
+                                <td>{{ actividad.descripcion }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted mb-0">No hay actividades registradas.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones y Sesiones -->
+    <div class="col-lg-4">
+        <!-- Acciones -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear"></i> Acciones
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'cambiar_password' %}" class="btn btn-warning">
+                        <i class="bi bi-shield-lock"></i> Cambiar Contraseña
+                    </a>
+                    <hr>
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sesiones Recientes -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Sesiones Recientes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if sesiones_recientes %}
+                <ul class="list-unstyled mb-0">
+                    {% for sesion in sesiones_recientes %}
+                    <li class="mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <small class="text-muted">{{ sesion.fecha_inicio|date:"d/m/Y H:i" }}</small>
+                                {% if sesion.fecha_fin %}
+                                    <br><small class="text-success">Cerrada</small>
+                                {% else %}
+                                    <br><small class="text-warning">Activa</small>
+                                {% endif %}
+                                {% if sesion.ip_address %}
+                                    <br><small class="text-muted">IP: {{ sesion.ip_address }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </li>
+                    {% if not forloop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted mb-0">No hay sesiones registradas.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Información de Permisos -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="bi bi-shield-check"></i> Mis Permisos
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6 class="mb-3">Como {{ usuario.get_rol_display }} puedes:</h6>
+                {% if usuario.is_admin %}
+                <ul class="small mb-0">
+                    <li>Gestionar obreros</li>
+                    <li>Gestionar bodegas y bodegueros</li>
+                    <li>Gestionar usuarios del sistema</li>
+                    <li>Ver reportes y estadísticas</li>
+                </ul>
+                {% elif usuario.is_bodeguero %}
+                <ul class="small mb-0">
+                    <li>Gestionar materiales</li>
+                    <li>Gestionar herramientas</li>
+                    <li>Registrar préstamos y devoluciones</li>
+                    <li>Controlar inventarios</li>
+                </ul>
+                {% elif usuario.is_supervisor %}
+                <ul class="small mb-0">
+                    <li>Generar reportes del sistema</li>
+                    <li>Exportar datos a CSV</li>
+                    <li>Crear y gestionar informes</li>
+                    <li>Ver información del sistema</li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
