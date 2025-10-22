@@ -179,29 +179,6 @@
                     {% endif %}
                 </ul>
                 
-                {% if user.is_supervisor %}
-                    <!-- Menú para Supervisores -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-file-earmark-bar-graph"></i> Reportes
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'reportes' %}">
-                                <i class="bi bi-file-earmark-bar-graph"></i> Centro de Reportes
-                            </a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'reporte_general' %}" target="_blank">
-                                <i class="bi bi-speedometer2"></i> Reporte General
-                            </a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'informe_list' %}">
-                            <i class="bi bi-journal-text"></i> Mis Informes
-                        </a>
-                    </li>
-                    {% endif %}
-
                 <!-- Usuario -->
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
@@ -222,6 +199,16 @@
                             <li>
                                 <a class="dropdown-item" href="{% url 'dashboard' %}">
                                     <i class="bi bi-speedometer2"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'perfil' %}">
+                                    <i class="bi bi-person-circle"></i> Mi Perfil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'cambiar_password' %}">
+                                    <i class="bi bi-shield-lock"></i> Cambiar Contraseña
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider"></li>

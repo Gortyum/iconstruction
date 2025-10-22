@@ -1,3 +1,6 @@
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django import forms
 from django.db.models import Q
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -1442,3 +1445,293 @@ class InformeDeleteView(SupervisorRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Informe eliminado exitosamente.')
         return super().delete(request, *args, **kwargs)
+    
+
+# ======== FORMULARIOS ========
+
+class CrearUsuarioForm(forms.ModelForm):
+    """Formulario para que el admin cree usuarios"""
+    password1 = forms.CharField(
+        label='Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        help_text='Mínimo 8 caracteres'
+    )
+    password2 = forms.CharField(
+        label='Confirmar Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        help_text='Ingrese la misma contraseña para verificación'
+    )
+    
+    class Meta:
+        model = Usuario
+        fields = ['username', 'email', 'first_name', 'last_name', 'telefono', 'rut', 'rol', 'activo']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'rut': forms.TextInput(attrs={'class': 'form-control'}),
+            'rol': forms.Select(attrs={'class': 'form-select'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+    
+    def clean_password2(self):
+        password1 = self.cleaned_data.get('password1')
+        password2 = self.cleaned_data.get('password2')
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError('Las contraseñas no coinciden')
+        if password1 and len(password1) < 8:
+            raise forms.ValidationError('La contraseña debe tener al menos 8 caracteres')
+        return password2
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data['password1'])
+        if commit:
+            user.save()
+        return user
+
+
+class EditarUsuarioForm(forms.ModelForm):
+    """Formulario para que el admin edite usuarios (sin contraseña)"""
+    
+    class Meta:
+        model = Usuario
+        fields = ['username', 'email', 'first_name', 'last_name', 'telefono', 'rut', 'rol', 'activo']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'rut': forms.TextInput(attrs={'class': 'form-control'}),
+            'rol': forms.Select(attrs={'class': 'form-select'}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class CambiarPasswordForm(forms.Form):
+    """Formulario para que los usuarios cambien su propia contraseña"""
+    password_actual = forms.CharField(
+        label='Contraseña Actual',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Contraseña actual'})
+    )
+    password_nueva = forms.CharField(
+        label='Nueva Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Nueva contraseña'}),
+        help_text='Mínimo 8 caracteres'
+    )
+    password_confirmacion = forms.CharField(
+        label='Confirmar Nueva Contraseña',
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Confirmar contraseña'})
+    )
+    
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+    
+    def clean_password_actual(self):
+        password_actual = self.cleaned_data.get('password_actual')
+        if not self.user.check_password(password_actual):
+            raise forms.ValidationError('La contraseña actual es incorrecta')
+        return password_actual
+    
+    def clean_password_confirmacion(self):
+        password_nueva = self.cleaned_data.get('password_nueva')
+        password_confirmacion = self.cleaned_data.get('password_confirmacion')
+        
+        if password_nueva and password_confirmacion:
+            if password_nueva != password_confirmacion:
+                raise forms.ValidationError('Las contraseñas no coinciden')
+            if len(password_nueva) < 8:
+                raise forms.ValidationError('La contraseña debe tener al menos 8 caracteres')
+        
+        return password_confirmacion
+    
+    def save(self):
+        self.user.set_password(self.cleaned_data['password_nueva'])
+        self.user.save()
+        return self.user
+
+
+# ======== VISTAS PARA ADMIN - CREAR USUARIO ========
+
+class CrearUsuarioView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+    """Vista para que el admin cree usuarios"""
+    model = Usuario
+    form_class = CrearUsuarioForm
+    template_name = 'auth/crear_usuario.html'
+    success_url = reverse_lazy('gestion_usuarios')
+    
+    def test_func(self):
+        return self.request.user.is_admin()
+    
+    def handle_no_permission(self):
+        messages.error(self.request, 'No tienes permisos para crear usuarios.')
+        return redirect('dashboard')
+    
+    def form_valid(self, form):
+        usuario = form.save()
+        
+        # Registrar actividad
+        registrar_actividad(
+            self.request,
+            'CREATE',
+            'Usuario',
+            usuario.id,
+            f'Usuario {usuario.username} creado por {self.request.user.username}'
+        )
+        
+        messages.success(
+            self.request,
+            f'Usuario {usuario.get_full_name()} creado exitosamente con rol {usuario.get_rol_display()}'
+        )
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Crear Nuevo Usuario'
+        return context
+
+
+class EditarUsuarioView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """Vista para que el admin edite usuarios"""
+    model = Usuario
+    form_class = EditarUsuarioForm
+    template_name = 'auth/editar_usuario.html'
+    success_url = reverse_lazy('gestion_usuarios')
+    pk_url_kwarg = 'user_id'
+    
+    def test_func(self):
+        return self.request.user.is_admin()
+    
+    def handle_no_permission(self):
+        messages.error(self.request, 'No tienes permisos para editar usuarios.')
+        return redirect('dashboard')
+    
+    def form_valid(self, form):
+        usuario = form.save()
+        
+        # Registrar actividad
+        registrar_actividad(
+            self.request,
+            'UPDATE',
+            'Usuario',
+            usuario.id,
+            f'Usuario {usuario.username} actualizado por {self.request.user.username}'
+        )
+        
+        messages.success(
+            self.request,
+            f'Usuario {usuario.get_full_name()} actualizado exitosamente'
+        )
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Editar Usuario'
+        context['usuario_editado'] = self.object
+        return context
+
+
+# ======== VISTAS PARA USUARIOS - CAMBIAR CONTRASEÑA ========
+
+class CambiarPasswordView(LoginRequiredMixin, View):
+    """Vista para que los usuarios cambien su propia contraseña"""
+    template_name = 'auth/cambiar_password.html'
+    
+    def get(self, request):
+        form = CambiarPasswordForm(user=request.user)
+        return render(request, self.template_name, {'form': form})
+    
+    def post(self, request):
+        form = CambiarPasswordForm(user=request.user, data=request.POST)
+        
+        if form.is_valid():
+            form.save()
+            
+            # Mantener la sesión activa después del cambio de contraseña
+            update_session_auth_hash(request, request.user)
+            
+            # Registrar actividad
+            registrar_actividad(
+                request,
+                'UPDATE',
+                'Usuario',
+                request.user.id,
+                f'Contraseña cambiada por {request.user.username}'
+            )
+            
+            messages.success(request, 'Tu contraseña ha sido cambiada exitosamente.')
+            return redirect('dashboard')
+        
+        return render(request, self.template_name, {'form': form})
+
+
+# ======== ADMIN RESETEAR CONTRASEÑA DE USUARIO ========
+
+@login_required
+@user_passes_test(es_admin)
+def resetear_password_usuario(request, user_id):
+    """Permite al admin resetear la contraseña de un usuario"""
+    usuario = get_object_or_404(Usuario, id=user_id)
+    
+    if request.method == 'POST':
+        nueva_password = request.POST.get('nueva_password')
+        confirmar_password = request.POST.get('confirmar_password')
+        
+        if nueva_password and confirmar_password:
+            if nueva_password == confirmar_password:
+                if len(nueva_password) >= 8:
+                    usuario.set_password(nueva_password)
+                    usuario.save()
+                    
+                    # Registrar actividad
+                    registrar_actividad(
+                        request,
+                        'UPDATE',
+                        'Usuario',
+                        usuario.id,
+                        f'Contraseña reseteada para {usuario.username} por {request.user.username}'
+                    )
+                    
+                    messages.success(
+                        request,
+                        f'Contraseña de {usuario.get_full_name()} reseteada exitosamente.'
+                    )
+                    return redirect('gestion_usuarios')
+                else:
+                    messages.error(request, 'La contraseña debe tener al menos 8 caracteres.')
+            else:
+                messages.error(request, 'Las contraseñas no coinciden.')
+        else:
+            messages.error(request, 'Debe ingresar una contraseña.')
+    
+    context = {
+        'usuario': usuario
+    }
+    return render(request, 'auth/resetear_password.html', context)
+
+
+# ======== VISTA DE PERFIL DE USUARIO ========
+
+class PerfilUsuarioView(LoginRequiredMixin, TemplateView):
+    """Vista del perfil del usuario actual"""
+    template_name = 'auth/perfil.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['usuario'] = self.request.user
+        
+        # Últimas actividades del usuario
+        context['actividades_recientes'] = LogActividad.objects.filter(
+            usuario=self.request.user
+        ).order_by('-fecha')[:10]
+        
+        # Sesiones activas
+        context['sesiones_recientes'] = SesionUsuario.objects.filter(
+            usuario=self.request.user
+        ).order_by('-fecha_inicio')[:5]
+        
+        return context

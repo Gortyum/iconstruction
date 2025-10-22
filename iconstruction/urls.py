@@ -62,6 +62,9 @@ from appiconstruction.views import (
     # Reportes
     ReportesView, reporte_materiales, reporte_prestamos,
     reporte_obreros, reporte_mermas, reporte_general,
+
+    CrearUsuarioView, EditarUsuarioView, CambiarPasswordView,
+    PerfilUsuarioView, resetear_password_usuario,
 )
 
 
@@ -151,5 +154,18 @@ urlpatterns = [
     path('reportes/obreros/', reporte_obreros, name='reporte_obreros'),
     path('reportes/mermas/', reporte_mermas, name='reporte_mermas'),
     path('reportes/general/', reporte_general, name='reporte_general'),
+
+    # ========== GESTIÓN DE USUARIOS (ADMIN) ==========
+    path('usuarios/', GestionUsuariosView.as_view(), name='gestion_usuarios'),
+    path('usuarios/crear/', CrearUsuarioView.as_view(), name='crear_usuario'),
+    path('usuarios/<int:user_id>/editar/', EditarUsuarioView.as_view(), name='editar_usuario'),
+    path('usuarios/<int:user_id>/activar/', activar_usuario, name='activar_usuario'),
+    path('usuarios/<int:user_id>/desactivar/', desactivar_usuario, name='desactivar_usuario'),
+    path('usuarios/<int:user_id>/cambiar-rol/', cambiar_rol_usuario, name='cambiar_rol_usuario'),
+    path('usuarios/<int:user_id>/resetear-password/', resetear_password_usuario, name='resetear_password_usuario'),
+    
+    # ========== PERFIL Y CONTRASEÑA (TODOS LOS USUARIOS) ==========
+    path('perfil/', PerfilUsuarioView.as_view(), name='perfil'),
+    path('cambiar-password/', CambiarPasswordView.as_view(), name='cambiar_password'),
     
 ]

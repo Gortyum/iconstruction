@@ -54,6 +54,7 @@
                             </a>
                         </td>
                     </tr>
+                    
                     {% endfor %}
                 </tbody>
             </table>
@@ -127,27 +128,42 @@
                         </td>
                         <td class="text-center">
                             <div class="btn-group" role="group">
-                                {% if usuario.activo and usuario != user %}
-                                    <a href="{% url 'desactivar_usuario' usuario.id %}" 
-                                       class="btn btn-sm btn-outline-danger"
-                                       onclick="return confirm('¿Desactivar este usuario?')"
-                                       title="Desactivar">
-                                        <i class="bi bi-x-circle"></i>
-                                    </a>
-                                {% elif not usuario.activo %}
-                                    <a href="{% url 'activar_usuario' usuario.id %}" 
-                                       class="btn btn-sm btn-outline-success"
-                                       onclick="return confirm('¿Activar este usuario?')"
-                                       title="Activar">
-                                        <i class="bi bi-check-circle"></i>
-                                    </a>
-                                {% endif %}
-                            </div>
+    <!-- Editar -->
+    <a href="{% url 'editar_usuario' usuario.id %}" 
+       class="btn btn-sm btn-outline-warning">
+        <i class="bi bi-pencil"></i>
+    </a>
+    
+    <!-- Resetear Contraseña -->
+    <a href="{% url 'resetear_password_usuario' usuario.id %}" 
+       class="btn btn-sm btn-outline-info">
+        <i class="bi bi-key"></i>
+    </a>
+    
+    <!-- Activar/Desactivar -->
+    {% if usuario.activo %}
+        <a href="{% url 'desactivar_usuario' usuario.id %}" 
+           class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-x-circle"></i>
+        </a>
+    {% else %}
+        <a href="{% url 'activar_usuario' usuario.id %}" 
+           class="btn btn-sm btn-outline-success">
+            <i class="bi bi-check-circle"></i>
+        </a>
+    {% endif %}
+</div>
                         </td>
                     </tr>
+                    
                     {% endfor %}
                 </tbody>
+                
             </table>
+        <a href="{% url 'crear_usuario' %}" class="btn btn-success">
+  Crear Usuario
+</a>
+
         </div>
     </div>
 </div>
