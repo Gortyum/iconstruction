@@ -70,7 +70,6 @@
                         <th>Nombre</th>
                         <th>Tipo</th>
                         <th>Marca</th>
-                        <th class="text-end">Precio</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -99,9 +98,7 @@
                                 <span class="text-muted">Sin marca</span>
                             {% endif %}
                         </td>
-                        <td class="text-end">
-                            <strong>${{ material.precio_material|floatformat:2 }}</strong>
-                        </td>
+                        
                         <td class="text-center">
                             <div class="btn-group" role="group">
                                 <a href="{% url 'material_detail' material.codigo_material %}" 

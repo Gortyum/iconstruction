@@ -61,7 +61,7 @@
                         <h6 class="text-muted mb-2">Material</h6>
                         <p class="mb-0">
                             <strong>{{ prestamo.codigo_material.nombre_material }}</strong>
-                            <br><small class="text-muted">Precio: ${{ prestamo.codigo_material.precio_material|floatformat:2 }}</small>
+                            
                         </p>
                     </div>
                 </div>
@@ -236,8 +236,7 @@
                 <h6>{{ prestamo.codigo_material.nombre_material }}</h6>
                 <hr>
                 <dl class="row mb-0 small">
-                    <dt class="col-6">Precio:</dt>
-                    <dd class="col-6 text-end">${{ prestamo.codigo_material.precio_material|floatformat:2 }}</dd>
+                    
                     
                     {% if prestamo.codigo_material.codigo_tipo %}
                     <dt class="col-6">Tipo:</dt>

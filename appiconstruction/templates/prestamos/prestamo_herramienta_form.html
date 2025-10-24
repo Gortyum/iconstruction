@@ -63,7 +63,7 @@
                             {% for herramienta in form.codigo_herramienta.field.queryset %}
                             <option value="{{ herramienta.pk }}" 
                                     {% if form.codigo_herramienta.value|stringformat:"s" == herramienta.pk|stringformat:"s" %}selected{% endif %}>
-                                {{ herramienta.nombre_herramienta }} - ${{ herramienta.precio_herramienta|floatformat:2 }}
+                                {{ herramienta.nombre_herramienta }} 
                             </option>
                             {% endfor %}
                         </select>

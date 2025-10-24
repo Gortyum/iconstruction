@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 
+
 # ======== PRIMERO: MODELO DE USUARIO ========
 
 class Usuario(AbstractUser):
@@ -13,14 +14,13 @@ class Usuario(AbstractUser):
         ('BODEGUERO', 'Bodeguero'),
         ('SUPERVISOR', 'Supervisor'),
     )
-    
+
     rol = models.CharField(max_length=20, choices=ROLES, default='BODEGUERO')
     telefono = models.CharField(max_length=15, blank=True)
     rut = models.CharField(max_length=12, unique=True, null=True, blank=True)
     fecha_contratacion = models.DateField(null=True, blank=True)
     activo = models.BooleanField(default=True)
-    
-    # Relación opcional con supervisor (si es supervisor)
+
     supervisor = models.OneToOneField(
         'Supervisor',
         on_delete=models.SET_NULL,
@@ -28,23 +28,23 @@ class Usuario(AbstractUser):
         blank=True,
         related_name='usuario_sistema'
     )
-    
+
     class Meta:
         verbose_name = 'Usuario'
         verbose_name_plural = 'Usuarios'
-    
+
     def __str__(self):
         return f"{self.get_full_name()} ({self.get_rol_display()})"
-    
+
     def is_admin(self):
         return self.rol == 'ADMIN'
-    
+
     def is_bodeguero(self):
         return self.rol == 'BODEGUERO'
-    
+
     def is_supervisor(self):
         return self.rol == 'SUPERVISOR'
-    
+
     def get_permisos(self):
         """Retorna los permisos según el rol"""
         if self.is_admin():
@@ -77,7 +77,6 @@ class Usuario(AbstractUser):
                 'informes': ['view', 'add', 'change', 'delete'],
             }
         return {}
-
 
 
 # ======== COMUNAS, ESTADOS Y CATEGORÍAS ========
@@ -176,15 +175,44 @@ class MarcaMaterial(models.Model):
         return self.nombre_marca
 
 
+from django.db import models
+
 class Material(models.Model):
     codigo_material = models.AutoField(primary_key=True)
     nombre_material = models.CharField(max_length=200)
-    precio_material = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    codigo_tipo = models.ForeignKey(TipoMaterial, on_delete=models.SET_NULL, null=True, related_name="materiales")
-    codigo_marca = models.ForeignKey(MarcaMaterial, on_delete=models.SET_NULL, null=True, related_name="materiales")
+    codigo_tipo = models.ForeignKey('TipoMaterial', on_delete=models.SET_NULL, null=True, related_name="materiales")
+    codigo_marca = models.ForeignKey('MarcaMaterial', on_delete=models.SET_NULL, null=True, related_name="materiales")
+
+    cantidad = models.DecimalField(max_digits=12, blank=True, null=True, decimal_places=2)
+    unidad_medida = models.CharField(max_length=20, blank=True)
+
+    # 🔹 Especificaciones técnicas
+    color = models.CharField(max_length=50, blank=True)
+    condicion = models.CharField(max_length=50, blank=True)  # nuevo, usado, reciclado...
+    acabado = models.CharField(max_length=50, blank=True)    # pulido, mate, brillante, rugoso...
+    presentacion = models.CharField(max_length=50, blank=True)  # rollo, plancha, tubo, etc.
+
+    # 🔹 Nuevas propiedades físicas / químicas / estructurales
+    densidad = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    peso_especifico = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    resistencia_traccion = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    dureza = models.CharField(max_length=50, blank=True, null=True)
+    conductividad_termica = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    conductividad_electrica = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
+    punto_fusion = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    espesor = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    largo = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    ancho = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    diametro = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    composicion = models.TextField(blank=True, null=True)  # descripción de la mezcla o composición química
+    norma_tecnica = models.CharField(max_length=100, blank=True, null=True)  # ASTM, ISO, etc.
+    tratamiento_superficial = models.CharField(max_length=100, blank=True, null=True)
+    temperatura_operacion = models.CharField(max_length=50, blank=True, null=True)
+    resistencia_quimica = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return self.nombre_material
+
 
 
 class ObraMaterial(models.Model):
@@ -288,8 +316,24 @@ class EstadoHerramienta(models.Model):
 class Herramienta(models.Model):
     codigo_herramienta = models.AutoField(primary_key=True)
     nombre_herramienta = models.CharField(max_length=200)
-    precio_herramienta = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    dimensiones = models.CharField(max_length=200, blank=True)
+
+    largo = models.CharField(max_length=200, blank=True)
+    ancho = models.CharField(max_length=200, blank=True)
+    alto = models.CharField(max_length=200, blank=True)
+    modelo = models.CharField(max_length=200, blank=True)
+    potencia = models.CharField(max_length=10, blank=True)
+    voltaje = models.CharField(max_length=10, blank=True)
+    tamaño_mandril = models.CharField(max_length=10, blank=True)
+    rpm = models.CharField(max_length=10, blank=True)
+    alimentacion = models.CharField(max_length=20, blank=True)
+    largo_cable = models.CharField(max_length=200, blank=True)
+    alcance = models.CharField(max_length=200, blank=True)
+    capacidad = models.CharField(max_length=200, blank=True)
+    diametro = models.CharField(max_length=200, blank=True)
+    ruedas = models.CharField(max_length=10, blank=True)
+    textura = models.CharField(max_length=20, blank=True)
+    especificaciones = models.CharField(max_length=100, blank=True)
+
     codigo_tipo = models.ForeignKey(TipoHerramienta, on_delete=models.SET_NULL, null=True, related_name="herramientas")
     codigo_categoria = models.ForeignKey(CategoriaHerramienta, on_delete=models.SET_NULL, null=True, related_name="herramientas")
     codigo_marca = models.ForeignKey(MarcaHerramienta, on_delete=models.SET_NULL, null=True, related_name="herramientas")
@@ -356,10 +400,10 @@ class PrestamoMaterial(models.Model):
     fecha_devolucion_esperada = models.DateField(null=True, blank=True)
     observaciones = models.TextField(blank=True)
     devuelto = models.BooleanField(default=False)
-    
+
     def __str__(self):
         return f"Préstamo {self.codigo_prestamo} - {self.codigo_material} a {self.id_obrero}"
-    
+
     class Meta:
         ordering = ['-fecha_prestamo']
 
@@ -369,20 +413,24 @@ class DevolucionMaterial(models.Model):
     codigo_prestamo = models.ForeignKey(PrestamoMaterial, on_delete=models.PROTECT, related_name="devoluciones")
     cantidad_devuelta = models.DecimalField(max_digits=12, decimal_places=2)
     cantidad_usada = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    merma = models.DecimalField(max_digits=12, decimal_places=2, default=0, 
-                                help_text="Cantidad que sobró pero no se puede reutilizar")
+    merma = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Cantidad que sobró pero no se puede reutilizar"
+    )
     fecha_devolucion = models.DateTimeField(default=timezone.now)
     observaciones = models.TextField(blank=True)
-    
+
     def __str__(self):
         return f"Devolución {self.codigo_devolucion} - Préstamo {self.codigo_prestamo.codigo_prestamo}"
-    
+
     def save(self, *args, **kwargs):
         self.cantidad_usada = self.codigo_prestamo.cantidad_prestada - self.cantidad_devuelta - self.merma
         super().save(*args, **kwargs)
         self.codigo_prestamo.devuelto = True
         self.codigo_prestamo.save()
-    
+
     class Meta:
         ordering = ['-fecha_devolucion']
 
@@ -399,10 +447,10 @@ class PrestamoHerramienta(models.Model):
     observaciones_prestamo = models.TextField(blank=True)
     observaciones_devolucion = models.TextField(blank=True)
     devuelto = models.BooleanField(default=False)
-    
+
     def __str__(self):
         return f"Préstamo {self.codigo_prestamo} - {self.codigo_herramienta} a {self.id_obrero}"
-    
+
     class Meta:
         ordering = ['-fecha_prestamo']
 
@@ -418,15 +466,14 @@ class SesionUsuario(models.Model):
     fecha_fin = models.DateTimeField(null=True, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True)
-    
+
     class Meta:
         ordering = ['-fecha_inicio']
         verbose_name = 'Sesión de Usuario'
         verbose_name_plural = 'Sesiones de Usuario'
-    
+
     def __str__(self):
         return f"Sesión {self.usuario.username} - {self.fecha_inicio}"
-
 
 
 # ======== LOG DE ACTIVIDADES ========
@@ -445,7 +492,7 @@ class LogActividad(models.Model):
         ('PRESTAMO', 'Préstamo'),
         ('DEVOLUCION', 'Devolución'),
     )
-    
+
     usuario = models.ForeignKey(Usuario, on_delete=models.SET_NULL, null=True, related_name='actividades')
     accion = models.CharField(max_length=20, choices=ACCIONES)
     modelo = models.CharField(max_length=100, blank=True)
@@ -453,12 +500,11 @@ class LogActividad(models.Model):
     descripcion = models.TextField()
     fecha = models.DateTimeField(auto_now_add=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
-    
+
     class Meta:
         ordering = ['-fecha']
         verbose_name = 'Log de Actividad'
         verbose_name_plural = 'Logs de Actividad'
-    
+
     def __str__(self):
         return f"{self.usuario} - {self.get_accion_display()} - {self.fecha}"
-

@@ -63,7 +63,7 @@
                             {% for material in form.codigo_material.field.queryset %}
                             <option value="{{ material.pk }}" 
                                     {% if form.codigo_material.value|stringformat:"s" == material.pk|stringformat:"s" %}selected{% endif %}>
-                                {{ material.nombre_material }} - ${{ material.precio_material|floatformat:2 }}
+                                {{ material.nombre_material }} 
                             </option>
                             {% endfor %}
                         </select>

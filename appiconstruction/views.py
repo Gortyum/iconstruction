@@ -81,11 +81,24 @@ class MaterialDetailView(DetailView):
         return context
 
 
+from django.urls import reverse_lazy
+from django.views.generic.edit import CreateView
+from .models import Material
+
 class MaterialCreateView(CreateView):
     model = Material
     template_name = 'materiales/material_form.html'
-    fields = ['nombre_material', 'precio_material', 'codigo_tipo', 'codigo_marca']
+    fields = [
+        'nombre_material', 'codigo_tipo', 'codigo_marca',
+        'cantidad', 'unidad_medida', 'color', 'condicion', 'acabado', 'presentacion',
+        'densidad', 'peso_especifico', 'resistencia_traccion', 'dureza',
+        'conductividad_termica', 'conductividad_electrica', 'punto_fusion',
+        'espesor', 'largo', 'ancho', 'diametro',
+        'composicion', 'norma_tecnica', 'tratamiento_superficial',
+        'temperatura_operacion', 'resistencia_quimica'
+    ]
     success_url = reverse_lazy('material_list')
+
     
     def form_valid(self, form):
         messages.success(self.request, 'Material creado exitosamente.')
@@ -101,7 +114,7 @@ class MaterialCreateView(CreateView):
 class MaterialUpdateView(UpdateView):
     model = Material
     template_name = 'materiales/material_form.html'
-    fields = ['nombre_material', 'precio_material', 'codigo_tipo', 'codigo_marca']
+    fields = ['nombre_material',  'codigo_tipo', 'codigo_marca', 'cantidad','unidad_medida', 'color', 'condicion','acabado', 'presentacion' ]
     success_url = reverse_lazy('material_list')
     pk_url_kwarg = 'pk'
     
@@ -190,8 +203,10 @@ class HerramientaCreateView(CreateView):
     model = Herramienta
     template_name = 'herramientas/herramienta_form.html'
     fields = [
-        'nombre_herramienta', 'precio_herramienta', 'dimensiones',
-        'codigo_tipo', 'codigo_categoria', 'codigo_marca', 'codigo_estado'
+        'nombre_herramienta',  'largo','ancho','alto', 'textura','especificaciones',
+        'codigo_tipo', 'codigo_categoria', 'codigo_marca', 'codigo_estado', 
+        'modelo', 'potencia', 'voltaje', 'tamaño_mandril', 'rpm', 'alimentacion', 'largo_cable',
+        'alcance', 'capacidad', 'diametro', 'ruedas',
     ]
     success_url = reverse_lazy('herramienta_list')
     
@@ -210,7 +225,7 @@ class HerramientaUpdateView(UpdateView):
     model = Herramienta
     template_name = 'herramientas/herramienta_form.html'
     fields = [
-        'nombre_herramienta', 'precio_herramienta', 'dimensiones',
+        'nombre_herramienta',  'largo','ancho','alto', 'textura','especificaciones',
         'codigo_tipo', 'codigo_categoria', 'codigo_marca', 'codigo_estado'
     ]
     success_url = reverse_lazy('herramienta_list')
@@ -1006,7 +1021,7 @@ def cambiar_rol_usuario(request, user_id):
     
     if request.method == 'POST':
         nuevo_rol = request.POST.get('rol')
-        if nuevo_rol in ['ADMIN', 'BODEGUERO', 'SUPERVISOR']:
+        if nuevo_rol in [ 'BODEGUERO', 'SUPERVISOR']:
             usuario.rol = nuevo_rol
             usuario.save()
             
@@ -1133,14 +1148,13 @@ def reporte_materiales(request):
     
     # Estadísticas
     total_materiales = materiales.count()
-    valor_total = materiales.aggregate(Sum('precio_material'))['precio_material__sum'] or 0
     
     if formato == 'csv':
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="reporte_materiales.csv"'
         
         writer = csv.writer(response)
-        writer.writerow(['Código', 'Nombre', 'Tipo', 'Marca', 'Precio'])
+        writer.writerow(['Código', 'Nombre', 'Tipo', 'Marca', ])
         
         for material in materiales:
             writer.writerow([
@@ -1148,7 +1162,6 @@ def reporte_materiales(request):
                 material.nombre_material,
                 material.codigo_tipo.nombre_tipo if material.codigo_tipo else '',
                 material.codigo_marca.nombre_marca if material.codigo_marca else '',
-                material.precio_material
             ])
         
         return response
@@ -1343,8 +1356,7 @@ def reporte_general(request):
         'prestamos_materiales': PrestamoMaterial.objects.count(),
         'prestamos_herramientas': PrestamoHerramienta.objects.count(),
         'prestamos_pendientes': PrestamoMaterial.objects.filter(devuelto=False).count(),
-        'valor_materiales': Material.objects.aggregate(Sum('precio_material'))['precio_material__sum'] or 0,
-        'valor_herramientas': Herramienta.objects.aggregate(Sum('precio_herramienta'))['precio_herramienta__sum'] or 0,
+        
     }
     
     # Préstamos recientes
