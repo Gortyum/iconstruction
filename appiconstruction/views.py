@@ -1180,7 +1180,6 @@ def reporte_materiales(request):
     context = {
         'materiales': materiales,
         'total_materiales': total_materiales,
-        'valor_total': valor_total,
         'fecha_generacion': timezone.now()
     }
     return render(request, 'reportes/reporte_materiales.html', context)
