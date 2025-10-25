@@ -192,7 +192,7 @@ class Material(models.Model):
     acabado = models.CharField(max_length=50, blank=True)    # pulido, mate, brillante, rugoso...
     presentacion = models.CharField(max_length=50, blank=True)  # rollo, plancha, tubo, etc.
 
-    # 🔹 Nuevas propiedades físicas / químicas / estructurales
+    
     densidad = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
     peso_especifico = models.DecimalField(max_digits=10, decimal_places=3, blank=True, null=True)
     resistencia_traccion = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)

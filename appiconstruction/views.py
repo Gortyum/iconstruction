@@ -114,7 +114,15 @@ class MaterialCreateView(CreateView):
 class MaterialUpdateView(UpdateView):
     model = Material
     template_name = 'materiales/material_form.html'
-    fields = ['nombre_material',  'codigo_tipo', 'codigo_marca', 'cantidad','unidad_medida', 'color', 'condicion','acabado', 'presentacion' ]
+    fields = [
+        'nombre_material', 'codigo_tipo', 'codigo_marca',
+        'cantidad', 'unidad_medida', 'color', 'condicion', 'acabado', 'presentacion',
+        'densidad', 'peso_especifico', 'resistencia_traccion', 'dureza',
+        'conductividad_termica', 'conductividad_electrica', 'punto_fusion',
+        'espesor', 'largo', 'ancho', 'diametro',
+        'composicion', 'norma_tecnica', 'tratamiento_superficial',
+        'temperatura_operacion', 'resistencia_quimica'
+    ]
     success_url = reverse_lazy('material_list')
     pk_url_kwarg = 'pk'
     
@@ -226,7 +234,9 @@ class HerramientaUpdateView(UpdateView):
     template_name = 'herramientas/herramienta_form.html'
     fields = [
         'nombre_herramienta',  'largo','ancho','alto', 'textura','especificaciones',
-        'codigo_tipo', 'codigo_categoria', 'codigo_marca', 'codigo_estado'
+        'codigo_tipo', 'codigo_categoria', 'codigo_marca', 'codigo_estado', 
+        'modelo', 'potencia', 'voltaje', 'tamaño_mandril', 'rpm', 'alimentacion', 'largo_cable',
+        'alcance', 'capacidad', 'diametro', 'ruedas',
     ]
     success_url = reverse_lazy('herramienta_list')
     pk_url_kwarg = 'pk'
