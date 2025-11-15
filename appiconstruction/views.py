@@ -6,18 +6,16 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import TemplateView
 from django.utils import timezone
 from .models import Usuario, SesionUsuario, LogActividad
 from django.contrib.auth.forms import UserCreationForm
-from django import forms
-from django.shortcuts import render, redirect, get_object_or_404
+
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
-from django.contrib import messages
+
 from .models import (
     # Materiales
     Material, TipoMaterial, MarcaMaterial,
@@ -36,22 +34,28 @@ from .models import (
 # ========================================
 
 class MaterialListView(ListView):
+    """Vista para listar materiales con funcionalidades de búsqueda y filtrado"""
     model = Material
     template_name = 'materiales/material_list.html'
     context_object_name = 'materiales'
-    paginate_by = 10
+    paginate_by = 10  # Divide los resultados en páginas de 10 elementos
     
     def get_queryset(self):
+        """Personaliza la consulta para incluir búsqueda y filtros"""
+        # Optimiza la consulta usando select_related para reducir el número de consultas a la BD
         queryset = Material.objects.select_related('codigo_tipo', 'codigo_marca').all()
         
+        # Filtro de búsqueda por nombre de material
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(nombre_material__icontains=search)
         
+        # Filtro por tipo de material
         tipo = self.request.GET.get('tipo')
         if tipo:
             queryset = queryset.filter(codigo_tipo_id=tipo)
         
+        # Filtro por marca de material
         marca = self.request.GET.get('marca')
         if marca:
             queryset = queryset.filter(codigo_marca_id=marca)
@@ -59,9 +63,11 @@ class MaterialListView(ListView):
         return queryset.order_by('nombre_material')
     
     def get_context_data(self, **kwargs):
+        """Agrega datos adicionales al contexto para los filtros en el template"""
         context = super().get_context_data(**kwargs)
-        context['tipos'] = TipoMaterial.objects.all()
-        context['marcas'] = MarcaMaterial.objects.all()
+        context['tipos'] = TipoMaterial.objects.all()  # Todos los tipos para el dropdown
+        context['marcas'] = MarcaMaterial.objects.all()  # Todas las marcas para el dropdown
+        # Mantener los valores seleccionados en los filtros
         context['search'] = self.request.GET.get('search', '')
         context['tipo_selected'] = self.request.GET.get('tipo', '')
         context['marca_selected'] = self.request.GET.get('marca', '')
@@ -69,46 +75,53 @@ class MaterialListView(ListView):
 
 
 class MaterialDetailView(DetailView):
+    """Vista para mostrar detalles específicos de un material"""
     model = Material
     template_name = 'materiales/material_detail.html'
     context_object_name = 'material'
     pk_url_kwarg = 'pk'
     
     def get_context_data(self, **kwargs):
+        """Agrega información relacionada como obras y bodegas asociadas"""
         context = super().get_context_data(**kwargs)
+        # Obtiene las obras donde se usa este material
         context['obras'] = self.object.obras_asignadas.select_related('codigo_obra').all()
+        # Obtiene las bodegas donde se almacena este material
         context['bodegas'] = self.object.bodegas.select_related('codigo_bodega').all()
         return context
 
 
-from django.urls import reverse_lazy
-from django.views.generic.edit import CreateView
-from .models import Material
-
 class MaterialCreateView(CreateView):
+    """Vista para crear nuevos materiales en el sistema"""
     model = Material
     template_name = 'materiales/material_form.html'
+    # Campos del modelo que se mostrarán en el formulario
     fields = [
         'nombre_material', 'codigo_tipo', 'codigo_marca',
         'cantidad', 'unidad_medida', 'color', 'condicion', 'acabado', 'presentacion',
+        # Propiedades físicas y técnicas
         'densidad', 'peso_especifico', 'resistencia_traccion', 'dureza',
         'conductividad_termica', 'conductividad_electrica', 'punto_fusion',
+        # Dimensiones
         'espesor', 'largo', 'ancho', 'diametro',
+        # Especificaciones técnicas
         'composicion', 'norma_tecnica', 'tratamiento_superficial',
         'temperatura_operacion', 'resistencia_quimica'
     ]
-    success_url = reverse_lazy('material_list')
-
+    success_url = reverse_lazy('material_list')  # Redirección después de crear
     
     def form_valid(self, form):
+        """Muestra mensaje de éxito cuando el formulario es válido"""
         messages.success(self.request, 'Material creado exitosamente.')
         return super().form_valid(form)
     
     def get_context_data(self, **kwargs):
+        """Configura el título y texto del botón para el template"""
         context = super().get_context_data(**kwargs)
         context['title'] = 'Crear Material'
         context['button_text'] = 'Crear'
         return context
+
 
 
 class MaterialUpdateView(UpdateView):
@@ -742,35 +755,72 @@ class DevolucionHerramientaView(UpdateView):
 # ======== FUNCIONES AUXILIARES ========
 
 def es_admin(user):
-    """Verifica si el usuario es administrador"""
-    return user.is_authenticated and user.rol == 'ADMIN'
+    """
+    Verifica si el usuario tiene rol de administrador
+    Realiza validaciones múltiples para mayor seguridad
+    """
+    return (user.is_authenticated and 
+            user.is_active and 
+            hasattr(user, 'rol') and 
+            user.rol == 'ADMIN')
 
 def es_bodeguero(user):
-    """Verifica si el usuario es bodeguero"""
-    return user.is_authenticated and user.rol == 'BODEGUERO'
+    """Verifica si el usuario es bodeguero con validación mejorada"""
+    return (user.is_authenticated and 
+            user.is_active and 
+            hasattr(user, 'rol') and 
+            user.rol == 'BODEGUERO')
+
+def es_supervisor(user):
+    """Verifica si el usuario es supervisor con validación mejorada"""
+    return (user.is_authenticated and 
+            user.is_active and 
+            hasattr(user, 'rol') and 
+            user.rol == 'SUPERVISOR')
 
 def registrar_actividad(request, accion, modelo='', objeto_id=None, descripcion=''):
-    """Registra una actividad en el log"""
+    """
+    Registra actividades de usuarios en el sistema para auditoría
+    Incluye información de IP y user agent para trazabilidad
+    """
     if request.user.is_authenticated:
-        ip = request.META.get('REMOTE_ADDR')
-        LogActividad.objects.create(
-            usuario=request.user,
-            accion=accion,
-            modelo=modelo,
-            objeto_id=objeto_id,
-            descripcion=descripcion,
-            ip_address=ip
-        )
+        try:
+            ip = get_client_ip(request)  # Obtiene IP real del cliente
+            user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]  # Limita longitud
+            
+            LogActividad.objects.create(
+                usuario=request.user,
+                accion=accion,
+                modelo=modelo,
+                objeto_id=objeto_id,
+                descripcion=descripcion,
+                ip_address=ip,
+                user_agent=user_agent
+            )
+            
+        except Exception as e:
+            # Log silencioso para no interrumpir el flujo principal
+            pass
 
 def get_client_ip(request):
-    """Obtiene la IP del cliente"""
+    """
+    Obtiene la IP real del cliente considerando proxies
+    Implementa medidas básicas contra spoofing
+    """
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+        ip = x_forwarded_for.split(',')[0].strip()  # Toma la primera IP en la cadena
+        if ip and len(ip) <= 45:  # Validación de longitud básica
+            return ip
+    return request.META.get('REMOTE_ADDR', '')
 
+def sanitizar_input(texto, max_length=100):
+    """Sanitiza inputs para prevenir ataques XSS básicos"""
+    if not texto:
+        return texto
+    texto = str(texto).strip()
+    texto = texto.replace('<', '').replace('>', '').replace('"', '').replace("'", '')
+    return texto[:max_length]
 
 # ======== FORMULARIOS ========
 
@@ -818,19 +868,21 @@ class LoginForm(forms.Form):
 # ======== VISTAS DE AUTENTICACIÓN ========
 
 class LoginView(View):
-    """Vista de inicio de sesión"""
+    """Vista de inicio de sesión con registro de actividad y seguridad"""
     template_name = 'auth/login.html'
     
     def get(self, request):
+        """Maneja solicitudes GET - muestra formulario de login"""
         if request.user.is_authenticated:
-            return redirect('dashboard')
+            return redirect('dashboard')  # Redirige si ya está autenticado
         form = LoginForm()
         return render(request, self.template_name, {'form': form})
     
     def post(self, request):
+        """Maneja solicitudes POST - procesa el login"""
         form = LoginForm(request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
+            username = sanitizar_input(form.cleaned_data['username'])  # Sanitiza entrada
             password = form.cleaned_data['password']
             user = authenticate(request, username=username, password=password)
             
@@ -838,14 +890,14 @@ class LoginView(View):
                 if user.activo:
                     login(request, user)
                     
-                    # Registrar sesión
+                    # Registra la sesión para seguimiento
                     SesionUsuario.objects.create(
                         usuario=user,
                         ip_address=get_client_ip(request),
-                        user_agent=request.META.get('HTTP_USER_AGENT', '')
+                        user_agent=request.META.get('HTTP_USER_AGENT', '')[:500]
                     )
                     
-                    # Registrar actividad
+                    # Registra la actividad de login
                     registrar_actividad(
                         request,
                         'LOGIN',
@@ -854,15 +906,31 @@ class LoginView(View):
                     
                     messages.success(request, f'¡Bienvenido {user.get_full_name()}!')
                     
-                    # Redireccionar según el rol
+                    # Redirección segura
                     next_url = request.GET.get('next', 'dashboard')
+                    if next_url and not next_url.startswith('/'):
+                        next_url = 'dashboard'
                     return redirect(next_url)
                 else:
+                    # Registra intento de login con cuenta inactiva
+                    registrar_actividad(
+                        request,
+                        'LOGIN_FAILED',
+                        descripcion=f'Intento de login con cuenta inactiva: {username}'
+                    )
                     messages.error(request, 'Tu cuenta está inactiva. Contacta al administrador.')
             else:
+                # Registra credenciales inválidas
+                registrar_actividad(
+                    request,
+                    'LOGIN_FAILED',
+                    descripcion=f'Credenciales inválidas para: {username}'
+                )
                 messages.error(request, 'Usuario o contraseña incorrectos.')
         
         return render(request, self.template_name, {'form': form})
+
+
 
 
 class RegistroView(View):
@@ -897,7 +965,7 @@ class LogoutView(View):
     
     def get(self, request):
         if request.user.is_authenticated:
-            # Cerrar sesión activa
+            # Cerrar sesión activa de forma segura
             sesion = SesionUsuario.objects.filter(
                 usuario=request.user,
                 fecha_fin__isnull=True
@@ -906,7 +974,7 @@ class LogoutView(View):
                 sesion.fecha_fin = timezone.now()
                 sesion.save()
             
-            # Registrar actividad
+            # Registrar actividad de logout
             registrar_actividad(
                 request,
                 'LOGOUT',
@@ -922,40 +990,57 @@ class LogoutView(View):
 # ======== DASHBOARD ========
 
 class DashboardView(LoginRequiredMixin, TemplateView):
-    """Dashboard principal según el rol del usuario"""
+    """Dashboard principal con contenido según el rol del usuario"""
     template_name = 'dashboard/dashboard.html'
     login_url = 'login'
     
     def dispatch(self, request, *args, **kwargs):
-        # Redireccionar supervisores a su dashboard específico
+        """
+        Intercepta todas las solicitudes para validaciones adicionales
+        """
+        if not request.user.is_authenticated:
+            return redirect(self.login_url)
+            
+        if not request.user.is_active:
+            messages.error(request, 'Tu cuenta está desactivada.')
+            logout(request)
+            return redirect('login')
+            
+        # Redirecciona supervisores a su dashboard específico
         if request.user.is_authenticated and request.user.is_supervisor():
             return redirect('supervisor_dashboard')
         return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
+        """Proporciona datos contextuales específicos para cada rol"""
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
-        if user.is_admin():
-            # Estadísticas para administrador
-            context['total_obreros'] = Obrero.objects.count()
-            context['total_bodegas'] = Bodega.objects.count()
-            context['total_bodegueros'] = Bodeguero.objects.count()
-            context['obreros_recientes'] = Obrero.objects.order_by('-id_obrero')[:5]
+        try:
+            if user.is_admin():
+                # Estadísticas relevantes para administradores
+                context['total_obreros'] = Obrero.objects.count()
+                context['total_bodegas'] = Bodega.objects.count()
+                context['total_bodegueros'] = Bodeguero.objects.count()
+                context['obreros_recientes'] = Obrero.objects.order_by('-id_obrero')[:5]
+                
+            elif user.is_bodeguero():
+                # Estadísticas relevantes para bodegueros
+                context['total_materiales'] = Material.objects.count()
+                context['total_herramientas'] = Herramienta.objects.count()
+                context['prestamos_pendientes'] = PrestamoMaterial.objects.filter(devuelto=False).count()
+                context['prestamos_herramientas_pendientes'] = PrestamoHerramienta.objects.filter(devuelto=False).count()
+                context['materiales_recientes'] = Material.objects.order_by('-codigo_material')[:5]
+                context['prestamos_recientes'] = PrestamoMaterial.objects.order_by('-fecha_prestamo')[:5]
             
-        elif user.is_bodeguero():
-            # Estadísticas para bodeguero
-            context['total_materiales'] = Material.objects.count()
-            context['total_herramientas'] = Herramienta.objects.count()
-            context['prestamos_pendientes'] = PrestamoMaterial.objects.filter(devuelto=False).count()
-            context['prestamos_herramientas_pendientes'] = PrestamoHerramienta.objects.filter(devuelto=False).count()
-            context['materiales_recientes'] = Material.objects.order_by('-codigo_material')[:5]
-            context['prestamos_recientes'] = PrestamoMaterial.objects.order_by('-fecha_prestamo')[:5]
-        
-        # Actividades recientes del usuario
-        context['actividades_recientes'] = LogActividad.objects.filter(
-            usuario=user
-        ).order_by('-fecha')[:10]
+            # Actividades recientes del usuario actual
+            context['actividades_recientes'] = LogActividad.objects.filter(
+                usuario=user
+            ).order_by('-fecha')[:10]
+            
+        except Exception as e:
+            # Manejo silencioso de errores para no afectar la experiencia del usuario
+            messages.error(self.request, 'Error al cargar los datos del dashboard.')
         
         return context
 
@@ -1052,29 +1137,56 @@ def cambiar_rol_usuario(request, user_id):
 # Agregar esto a TODAS las vistas existentes que necesiten protección
 
 class AdminRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Mixin que requiere que el usuario sea administrador"""
+    """Mixin que requiere que el usuario sea administrador """
     login_url = 'login'
     
     def test_func(self):
-        return self.request.user.is_admin()
+        return es_admin(self.request.user)
     
     def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return redirect(self.login_url)
+        
+        # Registrar intento de acceso no autorizado
+        registrar_actividad(
+            self.request,
+            'UNAUTHORIZED_ACCESS',
+            descripcion=f'Intento de acceso a {self.request.path}'
+        )
+        
         messages.error(self.request, 'No tienes permisos para acceder a esta sección.')
         return redirect('dashboard')
-
 
 class BodegueroRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Mixin que requiere que el usuario sea bodeguero"""
+    """Mixin que requiere que el usuario sea bodeguero """
     login_url = 'login'
     
     def test_func(self):
-        return self.request.user.is_bodeguero()
+        user = self.request.user
+        return es_bodeguero(user) or es_admin(user)
     
     def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return redirect(self.login_url)
         messages.error(self.request, 'No tienes permisos para acceder a esta sección.')
         return redirect('dashboard')
+
+
+class SupervisorRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Mixin que requiere que el usuario sea supervisor - Versión Mejorada"""
+    login_url = 'login'
     
-# AGREGAR ESTAS VISTAS AL ARCHIVO views.py
+    def test_func(self):
+        user = self.request.user
+        return es_supervisor(user) or es_admin(user)
+    
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return redirect(self.login_url)
+        messages.error(self.request, 'No tienes permisos para acceder a esta sección.')
+        return redirect('dashboard')
+      
+
 
 from django.http import HttpResponse, JsonResponse
 from django.db.models import Count, Sum, Q, Avg
@@ -1756,3 +1868,931 @@ class PerfilUsuarioView(LoginRequiredMixin, TemplateView):
         ).order_by('-fecha_inicio')[:5]
         
         return context
+    
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db.models import Q, Sum, Count
+from .models import (
+    Bodega, Material, Herramienta, MaterialBodega, 
+    HerramientaBodega, TipoBodega
+)
+
+# ============= DASHBOARD DE INVENTARIO =============
+
+@login_required
+def inventario_dashboard(request):
+    """Dashboard principal del sistema de inventario"""
+    
+    # Obtener bodega central
+    bodega_central = Bodega.objects.filter(
+        nombre_bodega__icontains='central'
+    ).first()
+    
+    # Bodegas regionales ordenadas de norte a sur
+    if bodega_central:
+        bodegas_regionales = Bodega.objects.exclude(
+            codigo_bodega=bodega_central.codigo_bodega
+        ).order_by('nombre_bodega')
+    else:
+        bodegas_regionales = Bodega.objects.all().order_by('nombre_bodega')
+    
+    # Estadísticas generales
+    total_materiales = Material.objects.count()
+    total_herramientas = Herramienta.objects.count()
+    total_bodegas = Bodega.objects.count()
+    
+    # Stock total por tipo
+    stock_materiales = MaterialBodega.objects.aggregate(
+        total=Sum('cantidad_almacenada')
+    )['total'] or 0
+    
+    stock_herramientas = HerramientaBodega.objects.aggregate(
+        total=Sum('cantidad_almacenada')
+    )['total'] or 0
+    
+    # Alertas de stock bajo (menos de 10 unidades)
+    materiales_bajo_stock = MaterialBodega.objects.filter(
+        cantidad_almacenada__lt=10
+    ).select_related('codigo_material', 'codigo_bodega')[:5]
+    
+    context = {
+        'bodega_central': bodega_central,
+        'bodegas_regionales': bodegas_regionales,
+        'total_materiales': total_materiales,
+        'total_herramientas': total_herramientas,
+        'total_bodegas': total_bodegas,
+        'stock_materiales': stock_materiales,
+        'stock_herramientas': stock_herramientas,
+        'materiales_bajo_stock': materiales_bajo_stock,
+    }
+    
+    return render(request, 'inventario/dashboard.html', context)
+
+
+# ============= VISTA DE BODEGA ESPECÍFICA =============
+
+@login_required
+def bodega_detalle(request, codigo_bodega):
+    """Detalle de inventario de una bodega específica"""
+    
+    bodega = get_object_or_404(Bodega, codigo_bodega=codigo_bodega)
+    
+    # Materiales en esta bodega
+    materiales = MaterialBodega.objects.filter(
+        codigo_bodega=bodega
+    ).select_related(
+        'codigo_material',
+        'codigo_material__codigo_tipo', 
+        'codigo_material__codigo_marca'
+    )
+    
+    # Herramientas en esta bodega
+    herramientas = HerramientaBodega.objects.filter(
+        codigo_bodega=bodega
+    ).select_related(
+        'codigo_herramienta',
+        'codigo_herramienta__codigo_tipo',
+        'codigo_herramienta__codigo_categoria'
+    )
+    
+    # Estadísticas de la bodega
+    total_materiales = materiales.count()
+    total_herramientas = herramientas.count()
+    
+    context = {
+        'bodega': bodega,
+        'materiales': materiales,
+        'herramientas': herramientas,
+        'total_materiales': total_materiales,
+        'total_herramientas': total_herramientas,
+    }
+    
+    return render(request, 'inventario/bodega_detalle.html', context)
+
+
+# ============= TRANSFERENCIA ENTRE BODEGAS =============
+
+@login_required
+def transferir_material(request):
+    """Transferir materiales entre bodegas"""
+    
+    if request.method == 'POST':
+        bodega_origen_id = request.POST.get('bodega_origen')
+        bodega_destino_id = request.POST.get('bodega_destino')
+        material_id = request.POST.get('material')
+        cantidad = float(request.POST.get('cantidad', 0))
+        
+        try:
+            # Obtener objetos
+            bodega_origen = get_object_or_404(Bodega, codigo_bodega=bodega_origen_id)
+            bodega_destino = get_object_or_404(Bodega, codigo_bodega=bodega_destino_id)
+            material = get_object_or_404(Material, codigo_material=material_id)
+            
+            # Obtener registro de origen
+            material_origen = MaterialBodega.objects.get(
+                codigo_bodega=bodega_origen,
+                codigo_material=material
+            )
+            
+            # Verificar stock suficiente
+            if material_origen.cantidad_almacenada < cantidad:
+                messages.error(request, 'Stock insuficiente en bodega de origen')
+                return redirect('transferir_material')
+            
+            # Reducir en origen
+            material_origen.cantidad_almacenada -= cantidad
+            material_origen.save()
+            
+            # Aumentar en destino (o crear si no existe)
+            material_destino, created = MaterialBodega.objects.get_or_create(
+                codigo_bodega=bodega_destino,
+                codigo_material=material,
+                defaults={'cantidad_almacenada': 0}
+            )
+            material_destino.cantidad_almacenada += cantidad
+            material_destino.save()
+            
+            messages.success(
+                request, 
+                f'Transferencia exitosa: {cantidad} unidades de {material.nombre_material}'
+            )
+            return redirect('inventario_dashboard')
+            
+        except MaterialBodega.DoesNotExist:
+            messages.error(request, 'Material no encontrado en bodega de origen')
+        except Exception as e:
+            messages.error(request, f'Error en la transferencia: {str(e)}')
+    
+    # GET request
+    bodegas = Bodega.objects.all().order_by('nombre_bodega')
+    materiales = Material.objects.all().order_by('nombre_material')
+    
+    context = {
+        'bodegas': bodegas,
+        'materiales': materiales,
+    }
+    
+    return render(request, 'inventario/transferir_material.html', context)
+
+
+# ============= AJUSTE DE INVENTARIO =============
+
+@login_required
+def ajustar_inventario(request, codigo_bodega):
+    """Ajustar cantidades de inventario (agregar/quitar stock)"""
+    
+    bodega = get_object_or_404(Bodega, codigo_bodega=codigo_bodega)
+    
+    if request.method == 'POST':
+        material_id = request.POST.get('material')
+        cantidad = float(request.POST.get('cantidad', 0))
+        tipo_ajuste = request.POST.get('tipo_ajuste')  # 'agregar' o 'quitar'
+        motivo = request.POST.get('motivo', '')
+        
+        try:
+            material = get_object_or_404(Material, codigo_material=material_id)
+            
+            material_bodega, created = MaterialBodega.objects.get_or_create(
+                codigo_bodega=bodega,
+                codigo_material=material,
+                defaults={'cantidad_almacenada': 0}
+            )
+            
+            if tipo_ajuste == 'agregar':
+                material_bodega.cantidad_almacenada += cantidad
+                messages.success(
+                    request, 
+                    f'Se agregaron {cantidad} unidades. Motivo: {motivo}'
+                )
+            elif tipo_ajuste == 'quitar':
+                if material_bodega.cantidad_almacenada >= cantidad:
+                    material_bodega.cantidad_almacenada -= cantidad
+                    messages.success(
+                        request, 
+                        f'Se quitaron {cantidad} unidades. Motivo: {motivo}'
+                    )
+                else:
+                    messages.error(request, 'Stock insuficiente para quitar esa cantidad')
+                    return redirect('ajustar_inventario', codigo_bodega=codigo_bodega)
+            
+            material_bodega.save()
+            return redirect('bodega_detalle', codigo_bodega=codigo_bodega)
+            
+        except Exception as e:
+            messages.error(request, f'Error al ajustar inventario: {str(e)}')
+    
+    # GET request
+    materiales = Material.objects.all().order_by('nombre_material')
+    
+    context = {
+        'bodega': bodega,
+        'materiales': materiales,
+    }
+    
+    return render(request, 'inventario/ajustar_inventario.html', context)
+
+
+# ============= REPORTE DE INVENTARIO =============
+
+@login_required
+def reporte_inventario(request):
+    """Reporte completo de inventario por bodega"""
+    
+    # Filtros
+    buscar = request.GET.get('buscar', '')
+    bodega_id = request.GET.get('bodega', '')
+    
+    # Query base
+    inventario = MaterialBodega.objects.select_related(
+        'codigo_material',
+        'codigo_material__codigo_tipo',
+        'codigo_material__codigo_marca',
+        'codigo_bodega'
+    )
+    
+    # Aplicar filtros
+    if buscar:
+        inventario = inventario.filter(
+            Q(codigo_material__nombre_material__icontains=buscar) |
+            Q(codigo_bodega__nombre_bodega__icontains=buscar)
+        )
+    
+    if bodega_id:
+        inventario = inventario.filter(codigo_bodega__codigo_bodega=bodega_id)
+    
+    # Estadísticas
+    total_items = inventario.count()
+    valor_total = inventario.aggregate(total=Sum('cantidad_almacenada'))['total'] or 0
+    
+    bodegas = Bodega.objects.all().order_by('nombre_bodega')
+    
+    context = {
+        'inventario': inventario,
+        'bodegas': bodegas,
+        'total_items': total_items,
+        'valor_total': valor_total,
+        'buscar': buscar,
+        'bodega_seleccionada': bodega_id,
+    }
+    
+    return render(request, 'inventario/reporte.html', context)
+
+
+# ============= VISTA DE BODEGA ESPECÍFICA =============
+
+@login_required
+def bodega_detalle(request, codigo_bodega):
+    """Detalle de inventario de una bodega específica"""
+    
+    bodega = get_object_or_404(Bodega, codigo_bodega=codigo_bodega)
+    
+    # Materiales en esta bodega
+    materiales = MaterialBodega.objects.filter(
+        codigo_bodega=bodega
+    ).select_related('codigo_material', 'codigo_material__codigo_tipo', 
+                     'codigo_material__codigo_marca')
+    
+    # Herramientas en esta bodega
+    herramientas = HerramientaBodega.objects.filter(
+        codigo_bodega=bodega
+    ).select_related('codigo_herramienta', 'codigo_herramienta__codigo_tipo',
+                     'codigo_herramienta__codigo_categoria')
+    
+    # Estadísticas de la bodega
+    total_materiales = materiales.count()
+    total_herramientas = herramientas.count()
+    
+    context = {
+        'bodega': bodega,
+        'materiales': materiales,
+        'herramientas': herramientas,
+        'total_materiales': total_materiales,
+        'total_herramientas': total_herramientas,
+    }
+    
+    return render(request, 'inventario/bodega_detalle.html', context)
+
+
+# ============= TRANSFERENCIA ENTRE BODEGAS =============
+
+@login_required
+def transferir_material(request):
+    """Transferir materiales entre bodegas"""
+    
+    if request.method == 'POST':
+        bodega_origen_id = request.POST.get('bodega_origen')
+        bodega_destino_id = request.POST.get('bodega_destino')
+        material_id = request.POST.get('material')
+        cantidad = float(request.POST.get('cantidad', 0))
+        
+        try:
+            # Obtener registros
+            material_origen = MaterialBodega.objects.get(
+                codigo_bodega_id=bodega_origen_id,
+                codigo_material_id=material_id
+            )
+            
+            # Verificar stock suficiente
+            if material_origen.cantidad_almacenada < cantidad:
+                messages.error(request, 'Stock insuficiente en bodega de origen')
+                return redirect('transferir_material')
+            
+            # Reducir en origen
+            material_origen.cantidad_almacenada -= cantidad
+            material_origen.save()
+            
+            # Aumentar en destino (o crear si no existe)
+            material_destino, created = MaterialBodega.objects.get_or_create(
+                codigo_bodega_id=bodega_destino_id,
+                codigo_material_id=material_id,
+                defaults={'cantidad_almacenada': 0}
+            )
+            material_destino.cantidad_almacenada += cantidad
+            material_destino.save()
+            
+            messages.success(
+                request, 
+                f'Transferencia exitosa: {cantidad} unidades de {material_origen.codigo_material.nombre_material}'
+            )
+            return redirect('inventario_dashboard')
+            
+        except MaterialBodega.DoesNotExist:
+            messages.error(request, 'Material no encontrado en bodega de origen')
+        except Exception as e:
+            messages.error(request, f'Error en la transferencia: {str(e)}')
+    
+    # GET request
+    bodegas = Bodega.objects.all()
+    materiales = Material.objects.all()
+    
+    context = {
+        'bodegas': bodegas,
+        'materiales': materiales,
+    }
+    
+    return render(request, 'inventario/transferir_material.html', context)
+
+
+# ============= AJUSTE DE INVENTARIO =============
+
+@login_required
+def ajustar_inventario(request, codigo_bodega):
+    """Ajustar cantidades de inventario (agregar/quitar stock)"""
+    
+    bodega = get_object_or_404(Bodega, codigo_bodega=codigo_bodega)
+    
+    if request.method == 'POST':
+        material_id = request.POST.get('material')
+        cantidad = float(request.POST.get('cantidad', 0))
+        tipo_ajuste = request.POST.get('tipo_ajuste')  # 'agregar' o 'quitar'
+        motivo = request.POST.get('motivo', '')
+        
+        try:
+            material_bodega, created = MaterialBodega.objects.get_or_create(
+                codigo_bodega=bodega,
+                codigo_material_id=material_id,
+                defaults={'cantidad_almacenada': 0}
+            )
+            
+            if tipo_ajuste == 'agregar':
+                material_bodega.cantidad_almacenada += cantidad
+                messages.success(
+                    request, 
+                    f'Se agregaron {cantidad} unidades. Motivo: {motivo}'
+                )
+            elif tipo_ajuste == 'quitar':
+                if material_bodega.cantidad_almacenada >= cantidad:
+                    material_bodega.cantidad_almacenada -= cantidad
+                    messages.success(
+                        request, 
+                        f'Se quitaron {cantidad} unidades. Motivo: {motivo}'
+                    )
+                else:
+                    messages.error(request, 'Stock insuficiente para quitar esa cantidad')
+                    return redirect('ajustar_inventario', codigo_bodega=codigo_bodega)
+            
+            material_bodega.save()
+            return redirect('bodega_detalle', codigo_bodega=codigo_bodega)
+            
+        except Exception as e:
+            messages.error(request, f'Error al ajustar inventario: {str(e)}')
+    
+    # GET request
+    materiales = Material.objects.all()
+    
+    context = {
+        'bodega': bodega,
+        'materiales': materiales,
+    }
+    
+    return render(request, 'inventario/ajustar_inventario.html', context)
+
+
+# ============= REPORTE DE INVENTARIO =============
+
+@login_required
+def reporte_inventario(request):
+    """Reporte completo de inventario por bodega"""
+    
+    # Filtros
+    buscar = request.GET.get('buscar', '')
+    bodega_id = request.GET.get('bodega', '')
+    
+    # Query base
+    inventario = MaterialBodega.objects.select_related(
+        'codigo_material', 'codigo_bodega'
+    )
+    
+    # Aplicar filtros
+    if buscar:
+        inventario = inventario.filter(
+            Q(codigo_material__nombre_material__icontains=buscar) |
+            Q(codigo_bodega__nombre_bodega__icontains=buscar)
+        )
+    
+    if bodega_id:
+        inventario = inventario.filter(codigo_bodega_id=bodega_id)
+    
+    # Estadísticas
+    total_items = inventario.count()
+    valor_total = inventario.aggregate(total=Sum('cantidad_almacenada'))['total'] or 0
+    
+    bodegas = Bodega.objects.all()
+    
+    context = {
+        'inventario': inventario,
+        'bodegas': bodegas,
+        'total_items': total_items,
+        'valor_total': valor_total,
+        'buscar': buscar,
+        'bodega_seleccionada': bodega_id,
+    }
+    
+    return render(request, 'inventario/reporte.html', context)
+
+
+# ============= DASHBOARD BODEGA CENTRAL =============
+
+@login_required
+def bodega_central_dashboard(request):
+    """Dashboard de la Bodega Central con control de distribución"""
+    
+    # Obtener o crear bodega central
+    bodega_central, created = Bodega.objects.get_or_create(
+        nombre_bodega__icontains='central',
+        defaults={
+            'nombre_bodega': 'Bodega Central Santiago',
+            'direccion_bodega': 'Av. Vicuña Mackenna 4860, La Florida, Santiago',
+            'capacidad': 5000.00
+        }
+    )
+    
+    if not bodega_central:
+        # Si no existe, buscar la primera bodega con "central" en el nombre
+        bodega_central = Bodega.objects.filter(
+            nombre_bodega__icontains='central'
+        ).first()
+        
+        if not bodega_central:
+            messages.warning(request, 'No existe una Bodega Central. Por favor créela primero.')
+            return redirect('bodega_list')
+    
+    # Bodegas regionales (todas excepto la central)
+    bodegas_regionales = Bodega.objects.exclude(
+        codigo_bodega=bodega_central.codigo_bodega
+    ).order_by('nombre_bodega')
+    
+    # Inventario de la bodega central
+    materiales_central = MaterialBodega.objects.filter(
+        codigo_bodega=bodega_central
+    ).select_related('codigo_material', 'codigo_material__codigo_tipo')
+    
+    herramientas_central = HerramientaBodega.objects.filter(
+        codigo_bodega=bodega_central
+    ).select_related('codigo_herramienta', 'codigo_herramienta__codigo_tipo')
+    
+    # Estadísticas
+    total_materiales_central = materiales_central.aggregate(
+        total=Sum('cantidad_almacenada')
+    )['total'] or 0
+    
+    total_herramientas_central = herramientas_central.aggregate(
+        total=Sum('cantidad_almacenada')
+    )['total'] or 0
+    
+    # Materiales con stock bajo en central (menos de 50)
+    materiales_bajo_stock = materiales_central.filter(
+        cantidad_almacenada__lt=50
+    )
+    
+    # Total distribuido a bodegas regionales
+    total_distribuido = MaterialBodega.objects.exclude(
+        codigo_bodega=bodega_central
+    ).aggregate(total=Sum('cantidad_almacenada'))['total'] or 0
+    
+    context = {
+        'bodega_central': bodega_central,
+        'bodegas_regionales': bodegas_regionales,
+        'materiales_central': materiales_central,
+        'herramientas_central': herramientas_central,
+        'total_materiales_central': total_materiales_central,
+        'total_herramientas_central': total_herramientas_central,
+        'materiales_bajo_stock': materiales_bajo_stock,
+        'total_distribuido': total_distribuido,
+        'total_bodegas_regionales': bodegas_regionales.count(),
+    }
+    
+    return render(request, 'inventario/bodega_central_dashboard.html', context)
+
+
+# ============= DISTRIBUIR DESDE CENTRAL =============
+
+@login_required
+def distribuir_desde_central(request):
+    """Distribuir materiales o herramientas desde la bodega central a regionales"""
+    
+    # Obtener bodega central
+    bodega_central = Bodega.objects.filter(
+        nombre_bodega__icontains='central'
+    ).first()
+    
+    if not bodega_central:
+        messages.error(request, 'No existe una Bodega Central configurada')
+        return redirect('bodega_list')
+    
+    if request.method == 'POST':
+        tipo_item = request.POST.get('tipo_item')  # 'material' o 'herramienta'
+        item_id = request.POST.get('item_id')
+        bodega_destino_id = request.POST.get('bodega_destino')
+        cantidad = float(request.POST.get('cantidad', 0))
+        motivo = request.POST.get('motivo', '')
+        
+        try:
+            bodega_destino = get_object_or_404(Bodega, codigo_bodega=bodega_destino_id)
+            
+            # Verificar que no sea la misma bodega central
+            if bodega_destino.codigo_bodega == bodega_central.codigo_bodega:
+                messages.error(request, 'No puede distribuir a la misma Bodega Central')
+                return redirect('distribuir_desde_central')
+            
+            if tipo_item == 'material':
+                material = get_object_or_404(Material, codigo_material=item_id)
+                
+                # Verificar stock en central
+                try:
+                    material_central = MaterialBodega.objects.get(
+                        codigo_bodega=bodega_central,
+                        codigo_material=material
+                    )
+                except MaterialBodega.DoesNotExist:
+                    messages.error(request, f'{material.nombre_material} no está disponible en Bodega Central')
+                    return redirect('distribuir_desde_central')
+                
+                if material_central.cantidad_almacenada < cantidad:
+                    messages.error(
+                        request, 
+                        f'Stock insuficiente en Bodega Central. Disponible: {material_central.cantidad_almacenada}'
+                    )
+                    return redirect('distribuir_desde_central')
+                
+                # Reducir stock en central
+                material_central.cantidad_almacenada -= cantidad
+                material_central.save()
+                
+                # Aumentar en bodega destino
+                material_destino, created = MaterialBodega.objects.get_or_create(
+                    codigo_bodega=bodega_destino,
+                    codigo_material=material,
+                    defaults={'cantidad_almacenada': 0}
+                )
+                material_destino.cantidad_almacenada += cantidad
+                material_destino.save()
+                
+                messages.success(
+                    request,
+                    f'✓ Distribución exitosa: {cantidad} unidades de {material.nombre_material} '
+                    f'a {bodega_destino.nombre_bodega}. Motivo: {motivo}'
+                )
+                
+            elif tipo_item == 'herramienta':
+                herramienta = get_object_or_404(Herramienta, codigo_herramienta=item_id)
+                
+                # Verificar stock en central
+                try:
+                    herramienta_central = HerramientaBodega.objects.get(
+                        codigo_bodega=bodega_central,
+                        codigo_herramienta=herramienta
+                    )
+                except HerramientaBodega.DoesNotExist:
+                    messages.error(request, f'{herramienta.nombre_herramienta} no está disponible en Bodega Central')
+                    return redirect('distribuir_desde_central')
+                
+                if herramienta_central.cantidad_almacenada < cantidad:
+                    messages.error(
+                        request,
+                        f'Stock insuficiente en Bodega Central. Disponible: {herramienta_central.cantidad_almacenada}'
+                    )
+                    return redirect('distribuir_desde_central')
+                
+                # Reducir stock en central
+                herramienta_central.cantidad_almacenada -= cantidad
+                herramienta_central.save()
+                
+                # Aumentar en bodega destino
+                herramienta_destino, created = HerramientaBodega.objects.get_or_create(
+                    codigo_bodega=bodega_destino,
+                    codigo_herramienta=herramienta,
+                    defaults={'cantidad_almacenada': 0}
+                )
+                herramienta_destino.cantidad_almacenada += cantidad
+                herramienta_destino.save()
+                
+                messages.success(
+                    request,
+                    f'✓ Distribución exitosa: {cantidad} unidades de {herramienta.nombre_herramienta} '
+                    f'a {bodega_destino.nombre_bodega}. Motivo: {motivo}'
+                )
+            
+            return redirect('bodega_central_dashboard')
+            
+        except Exception as e:
+            messages.error(request, f'Error en la distribución: {str(e)}')
+    
+    # GET request
+    # Bodegas regionales (excluir central)
+    bodegas_destino = Bodega.objects.exclude(
+        codigo_bodega=bodega_central.codigo_bodega
+    ).order_by('nombre_bodega')
+    
+    # Materiales disponibles en central
+    materiales_central = MaterialBodega.objects.filter(
+        codigo_bodega=bodega_central,
+        cantidad_almacenada__gt=0
+    ).select_related('codigo_material', 'codigo_material__codigo_tipo')
+    
+    # Herramientas disponibles en central
+    herramientas_central = HerramientaBodega.objects.filter(
+        codigo_bodega=bodega_central,
+        cantidad_almacenada__gt=0
+    ).select_related('codigo_herramienta', 'codigo_herramienta__codigo_tipo')
+    
+    context = {
+        'bodega_central': bodega_central,
+        'bodegas_destino': bodegas_destino,
+        'materiales_central': materiales_central,
+        'herramientas_central': herramientas_central,
+    }
+    
+    return render(request, 'inventario/distribuir_desde_central.html', context)
+
+
+# ============= SOLICITAR A CENTRAL =============
+
+@login_required
+def solicitar_a_central(request, codigo_bodega):
+    """Bodega regional solicita materiales/herramientas a la central"""
+    
+    bodega_solicitante = get_object_or_404(Bodega, codigo_bodega=codigo_bodega)
+    
+    # Verificar que no sea la bodega central
+    if 'central' in bodega_solicitante.nombre_bodega.lower():
+        messages.error(request, 'La Bodega Central no puede solicitar a sí misma')
+        return redirect('bodega_detalle', codigo_bodega=codigo_bodega)
+    
+    bodega_central = Bodega.objects.filter(
+        nombre_bodega__icontains='central'
+    ).first()
+    
+    if not bodega_central:
+        messages.error(request, 'No existe una Bodega Central configurada')
+        return redirect('bodega_detalle', codigo_bodega=codigo_bodega)
+    
+    if request.method == 'POST':
+        tipo_item = request.POST.get('tipo_item')
+        item_id = request.POST.get('item_id')
+        cantidad = float(request.POST.get('cantidad', 0))
+        motivo = request.POST.get('motivo', '')
+        
+        try:
+            if tipo_item == 'material':
+                material = get_object_or_404(Material, codigo_material=item_id)
+                
+                # Verificar disponibilidad en central
+                try:
+                    material_central = MaterialBodega.objects.get(
+                        codigo_bodega=bodega_central,
+                        codigo_material=material
+                    )
+                except MaterialBodega.DoesNotExist:
+                    messages.error(request, f'{material.nombre_material} no disponible en Bodega Central')
+                    return redirect('solicitar_a_central', codigo_bodega=codigo_bodega)
+                
+                if material_central.cantidad_almacenada < cantidad:
+                    messages.error(
+                        request,
+                        f'Stock insuficiente en Bodega Central. Disponible: {material_central.cantidad_almacenada}'
+                    )
+                    return redirect('solicitar_a_central', codigo_bodega=codigo_bodega)
+                
+                # Transferir
+                material_central.cantidad_almacenada -= cantidad
+                material_central.save()
+                
+                material_destino, created = MaterialBodega.objects.get_or_create(
+                    codigo_bodega=bodega_solicitante,
+                    codigo_material=material,
+                    defaults={'cantidad_almacenada': 0}
+                )
+                material_destino.cantidad_almacenada += cantidad
+                material_destino.save()
+                
+                messages.success(
+                    request,
+                    f'✓ Solicitud aprobada: {cantidad} unidades de {material.nombre_material}. Motivo: {motivo}'
+                )
+                
+            elif tipo_item == 'herramienta':
+                herramienta = get_object_or_404(Herramienta, codigo_herramienta=item_id)
+                
+                try:
+                    herramienta_central = HerramientaBodega.objects.get(
+                        codigo_bodega=bodega_central,
+                        codigo_herramienta=herramienta
+                    )
+                except HerramientaBodega.DoesNotExist:
+                    messages.error(request, f'{herramienta.nombre_herramienta} no disponible en Bodega Central')
+                    return redirect('solicitar_a_central', codigo_bodega=codigo_bodega)
+                
+                if herramienta_central.cantidad_almacenada < cantidad:
+                    messages.error(
+                        request,
+                        f'Stock insuficiente en Bodega Central. Disponible: {herramienta_central.cantidad_almacenada}'
+                    )
+                    return redirect('solicitar_a_central', codigo_bodega=codigo_bodega)
+                
+                # Transferir
+                herramienta_central.cantidad_almacenada -= cantidad
+                herramienta_central.save()
+                
+                herramienta_destino, created = HerramientaBodega.objects.get_or_create(
+                    codigo_bodega=bodega_solicitante,
+                    codigo_herramienta=herramienta,
+                    defaults={'cantidad_almacenada': 0}
+                )
+                herramienta_destino.cantidad_almacenada += cantidad
+                herramienta_destino.save()
+                
+                messages.success(
+                    request,
+                    f'✓ Solicitud aprobada: {cantidad} unidades de {herramienta.nombre_herramienta}. Motivo: {motivo}'
+                )
+            
+            return redirect('bodega_detalle', codigo_bodega=codigo_bodega)
+            
+        except Exception as e:
+            messages.error(request, f'Error en la solicitud: {str(e)}')
+    
+    # GET request - Mostrar disponibilidad en central
+    materiales_central = MaterialBodega.objects.filter(
+        codigo_bodega=bodega_central,
+        cantidad_almacenada__gt=0
+    ).select_related('codigo_material', 'codigo_material__codigo_tipo')
+    
+    herramientas_central = HerramientaBodega.objects.filter(
+        codigo_bodega=bodega_central,
+        cantidad_almacenada__gt=0
+    ).select_related('codigo_herramienta', 'codigo_herramienta__codigo_tipo')
+    
+    context = {
+        'bodega_solicitante': bodega_solicitante,
+        'bodega_central': bodega_central,
+        'materiales_central': materiales_central,
+        'herramientas_central': herramientas_central,
+    }
+    
+    return render(request, 'inventario/solicitar_a_central.html', context)
+
+
+# ============= ABASTECER BODEGA CENTRAL =============
+
+@login_required
+def abastecer_bodega_central(request):
+    """Agregar stock a la bodega central (compras, ingresos externos)"""
+    
+    bodega_central = Bodega.objects.filter(
+        nombre_bodega__icontains='central'
+    ).first()
+    
+    if not bodega_central:
+        messages.error(request, 'No existe una Bodega Central configurada')
+        return redirect('bodega_list')
+    
+    if request.method == 'POST':
+        tipo_item = request.POST.get('tipo_item')
+        item_id = request.POST.get('item_id')
+        cantidad = float(request.POST.get('cantidad', 0))
+        motivo = request.POST.get('motivo', '')
+        
+        try:
+            if tipo_item == 'material':
+                material = get_object_or_404(Material, codigo_material=item_id)
+                
+                material_central, created = MaterialBodega.objects.get_or_create(
+                    codigo_bodega=bodega_central,
+                    codigo_material=material,
+                    defaults={'cantidad_almacenada': 0}
+                )
+                
+                material_central.cantidad_almacenada += cantidad
+                material_central.save()
+                
+                messages.success(
+                    request,
+                    f'✓ Abastecimiento exitoso: {cantidad} unidades de {material.nombre_material}. Motivo: {motivo}'
+                )
+                
+            elif tipo_item == 'herramienta':
+                herramienta = get_object_or_404(Herramienta, codigo_herramienta=item_id)
+                
+                herramienta_central, created = HerramientaBodega.objects.get_or_create(
+                    codigo_bodega=bodega_central,
+                    codigo_herramienta=herramienta,
+                    defaults={'cantidad_almacenada': 0}
+                )
+                
+                herramienta_central.cantidad_almacenada += cantidad
+                herramienta_central.save()
+                
+                messages.success(
+                    request,
+                    f'✓ Abastecimiento exitoso: {cantidad} unidades de {herramienta.nombre_herramienta}. Motivo: {motivo}'
+                )
+            
+            return redirect('bodega_central_dashboard')
+            
+        except Exception as e:
+            messages.error(request, f'Error en el abastecimiento: {str(e)}')
+    
+    # GET request
+    todos_materiales = Material.objects.all().order_by('nombre_material')
+    todas_herramientas = Herramienta.objects.all().order_by('nombre_herramienta')
+    
+    context = {
+        'bodega_central': bodega_central,
+        'todos_materiales': todos_materiales,
+        'todas_herramientas': todas_herramientas,
+    }
+    
+    return render(request, 'inventario/abastecer_central.html', context)
+
+
+# ============= REPORTE DE DISTRIBUCIÓN =============
+
+@login_required
+def reporte_distribucion(request):
+    """Reporte de distribución desde bodega central a regionales"""
+    
+    bodega_central = Bodega.objects.filter(
+        nombre_bodega__icontains='central'
+    ).first()
+    
+    if not bodega_central:
+        messages.error(request, 'No existe una Bodega Central configurada')
+        return redirect('bodega_list')
+    
+    # Stock en bodega central
+    materiales_central = MaterialBodega.objects.filter(
+        codigo_bodega=bodega_central
+    ).select_related('codigo_material')
+    
+    # Stock en bodegas regionales
+    bodegas_regionales = Bodega.objects.exclude(
+        codigo_bodega=bodega_central.codigo_bodega
+    ).prefetch_related('materiales')
+    
+    # Resumen por bodega regional
+    resumen_bodegas = []
+    for bodega in bodegas_regionales:
+        total_items = MaterialBodega.objects.filter(
+            codigo_bodega=bodega
+        ).count()
+        
+        total_cantidad = MaterialBodega.objects.filter(
+            codigo_bodega=bodega
+        ).aggregate(total=Sum('cantidad_almacenada'))['total'] or 0
+        
+        resumen_bodegas.append({
+            'bodega': bodega,
+            'total_items': total_items,
+            'total_cantidad': total_cantidad
+        })
+    
+    context = {
+        'bodega_central': bodega_central,
+        'materiales_central': materiales_central,
+        'resumen_bodegas': resumen_bodegas,
+    }
+    
+    return render(request, 'inventario/reporte_distribucion.html', context)

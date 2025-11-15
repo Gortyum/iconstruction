@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}Abastecer Bodega Central{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'bodega_central_dashboard' %}">Bodega Central</a></li>
+                <li class="breadcrumb-item active">Abastecer</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-lg">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-box-arrow-in-down"></i> Abastecer {{ bodega_central.nombre_bodega }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success mb-4">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Ingreso de Stock:</strong> Use este formulario para registrar compras, 
+                    devoluciones o cualquier ingreso de materiales/herramientas a la Bodega Central.
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Tipo de Item -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="bi bi-list-check"></i> Tipo de Item *
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="tipo_item" id="tipo_material" 
+                                       value="material" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary btn-lg" for="tipo_material">
+                                    <i class="bi bi-box-seam"></i><br> Material
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="tipo_item" id="tipo_herramienta" 
+                                       value="herramienta" autocomplete="off">
+                                <label class="btn btn-outline-warning btn-lg" for="tipo_herramienta">
+                                    <i class="bi bi-tools"></i><br> Herramienta
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selección de Material -->
+                    <div class="mb-3" id="seccion_material">
+                        <label for="material_id" class="form-label">
+                            <i class="bi bi-box-seam"></i> Seleccione el Material *
+                        </label>
+                        <select class="form-select form-select-lg" id="material_id" name="item_id">
+                            <option value="">Seleccione un material...</option>
+                            {% for material in todos_materiales %}
+                            <option value="{{ material.codigo_material }}">
+                                {{ material.nombre_material }}
+                                {% if material.codigo_tipo %}
+                                    - {{ material.codigo_tipo.nombre_tipo }}
+                                {% endif %}
+                                ({{ material.unidad_medida|default:"unidad" }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Selección de Herramienta -->
+                    <div class="mb-3" id="seccion_herramienta" style="display: none;">
+                        <label for="herramienta_id" class="form-label">
+                            <i class="bi bi-tools"></i> Seleccione la Herramienta *
+                        </label>
+                        <select class="form-select form-select-lg" id="herramienta_id" name="item_id_h">
+                            <option value="">Seleccione una herramienta...</option>
+                            {% for herramienta in todas_herramientas %}
+                            <option value="{{ herramienta.codigo_herramienta }}">
+                                {{ herramienta.nombre_herramienta }}
+                                {% if herramienta.codigo_tipo %}
+                                    - {{ herramienta.codigo_tipo.nombre_tipo }}
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="cantidad" class="form-label">
+                                <i class="bi bi-hash"></i> Cantidad a Ingresar *
+                            </label>
+                            <input type="number" 
+                                   class="form-control form-control-lg" 
+                                   id="cantidad" 
+                                   name="cantidad" 
+                                   step="0.01" 
+                                   min="0.01" 
+                                   required
+                                   placeholder="0.00">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="motivo" class="form-label">
+                                <i class="bi bi-clipboard-check"></i> Origen/Motivo *
+                            </label>
+                            <select class="form-select form-select-lg" id="motivo" name="motivo" required>
+                                <option value="">Seleccione...</option>
+                                <option value="Compra a proveedor">Compra a proveedor</option>
+                                <option value="Devolución de bodega regional">Devolución de bodega regional</option>
+                                <option value="Devolución de obra">Devolución de obra</option>
+                                <option value="Donación">Donación</option>
+                                <option value="Ajuste de inventario">Ajuste de inventario</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4" id="motivo_otro" style="display: none;">
+                        <label for="motivo_detalle" class="form-label">
+                            <i class="bi bi-chat-left-text"></i> Especifique el Motivo
+                        </label>
+                        <textarea class="form-control" 
+                                  id="motivo_detalle" 
+                                  name="motivo_detalle" 
+                                  rows="2" 
+                                  placeholder="Describa el motivo del ingreso..."></textarea>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="card bg-light mb-4" id="preview" style="display: none;">
+                        <div class="card-body">
+                            <h6><i class="bi bi-eye"></i> Vista Previa</h6>
+                            <div id="preview-content"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle-fill"></i> Confirmar Abastecimiento
+                        </button>
+                        <a href="{% url 'bodega_central_dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Panel de Ayuda -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Consejos</h6>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Registre todos los ingresos con su motivo correspondiente</li>
+                    <li>Verifique las cantidades antes de confirmar</li>
+                    <li>Para compras, incluya el número de orden o factura en el motivo</li>
+                    <li>Los materiales ingresados estarán disponibles inmediatamente para distribución</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .breadcrumb {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 1rem;
+        border-radius: 0.75rem;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoMaterial = document.getElementById('tipo_material');
+    const tipoHerramienta = document.getElementById('tipo_herramienta');
+    const seccionMaterial = document.getElementById('seccion_material');
+    const seccionHerramienta = document.getElementById('seccion_herramienta');
+    const materialSelect = document.getElementById('material_id');
+    const herramientaSelect = document.getElementById('herramienta_id');
+    const motivoSelect = document.getElementById('motivo');
+    const motivoOtro = document.getElementById('motivo_otro');
+    const cantidad = document.getElementById('cantidad');
+    const preview = document.getElementById('preview');
+    const previewContent = document.getElementById('preview-content');
+    
+    // Cambiar tipo
+    tipoMaterial.addEventListener('change', function() {
+        seccionMaterial.style.display = 'block';
+        seccionHerramienta.style.display = 'none';
+        materialSelect.required = true;
+        herramientaSelect.required = false;
+        actualizarPreview();
+    });
+    
+    tipoHerramienta.addEventListener('change', function() {
+        seccionMaterial.style.display = 'none';
+        seccionHerramienta.style.display = 'block';
+        materialSelect.required = false;
+        herramientaSelect.required = true;
+        actualizarPreview();
+    });
+    
+    // Mostrar campo "otro motivo"
+    motivoSelect.addEventListener('change', function() {
+        if (this.value === 'Otro') {
+            motivoOtro.style.display = 'block';
+        } else {
+            motivoOtro.style.display = 'none';
+        }
+        actualizarPreview();
+    });
+    
+    // Preview
+    function actualizarPreview() {
+        let itemNombre = '';
+        if (tipoMaterial.checked && materialSelect.value) {
+            itemNombre = materialSelect.options[materialSelect.selectedIndex].text;
+        } else if (tipoHerramienta.checked && herramientaSelect.value) {
+            itemNombre = herramientaSelect.options[herramientaSelect.selectedIndex].text;
+        }
+        
+        if (itemNombre && cantidad.value && motivoSelect.value) {
+            const tipo = tipoMaterial.checked ? 'Material' : 'Herramienta';
+            previewContent.innerHTML = `
+                <p class="mb-1"><strong>Tipo:</strong> ${tipo}</p>
+                <p class="mb-1"><strong>Item:</strong> ${itemNombre}</p>
+                <p class="mb-1"><strong>Cantidad:</strong> <span class="badge bg-success">${cantidad.value}</span></p>
+                <p class="mb-0"><strong>Motivo:</strong> ${motivoSelect.value}</p>
+            `;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+    
+    materialSelect.addEventListener('change', actualizarPreview);
+    herramientaSelect.addEventListener('change', actualizarPreview);
+    cantidad.addEventListener('input', actualizarPreview);
+    
+    // Envío del formulario
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (tipoHerramienta.checked) {
+            const herramientaId = herramientaSelect.value;
+            if (herramientaId) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'item_id';
+                input.value = herramientaId;
+                this.appendChild(input);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

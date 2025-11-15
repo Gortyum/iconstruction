@@ -1,0 +1,331 @@
+Internal Server Error: /inventario/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 1864, in inventario_dashboard
+    bodegas_regionales = Bodega.objects.exclude(
+                         ~~~~~~~~~~~~~~~~~~~~~~^
+        id=bodega_central.codigo_bodega if bodega_central else None
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).order_by('nombre_bodega')
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in exclude
+    return self._filter_or_exclude(True, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1511, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1516, in _filter_or_exclude_inplace
+    self._query.add_q(~Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1646, in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1806, in names_to_path
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Cannot resolve keyword 'id' into field. Choices are: bodegueros, capacidad, codigo_bodega, codigo_tipo, codigo_tipo_id, direccion_bodega, herramientas, materiales, nombre_bodega
+"GET /inventario/ HTTP/1.1" 500 119531
+Internal Server Error: /inventario/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 1864, in inventario_dashboard
+    bodegas_regionales = Bodega.objects.exclude(
+                         ~~~~~~~~~~~~~~~~~~~~~~^
+        id=bodega_central.codigo_bodega if bodega_central else None
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).order_by('nombre_bodega')
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in exclude
+    return self._filter_or_exclude(True, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1511, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1516, in _filter_or_exclude_inplace
+    self._query.add_q(~Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1646, in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1806, in names_to_path
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Cannot resolve keyword 'id' into field. Choices are: bodegueros, capacidad, codigo_bodega, codigo_tipo, codigo_tipo_id, direccion_bodega, herramientas, materiales, nombre_bodega
+"GET /inventario/ HTTP/1.1" 500 119690
+Not Found: /inventario/dashboard
+"GET /inventario/dashboard HTTP/1.1" 404 16254
+Not Found: /inventario/dashboard
+"GET /inventario/dashboard HTTP/1.1" 404 16243
+Not Found: /inventario/bodega
+"GET /inventario/bodega HTTP/1.1" 404 16245
+Not Found: /inventario/bodega/
+"GET /inventario/bodega/ HTTP/1.1" 404 16248
+Not Found: /inventario/dashboard
+"GET /inventario/dashboard HTTP/1.1" 404 16254
+Not Found: /inventario/dashboard.html
+"GET /inventario/dashboard.html HTTP/1.1" 404 16269
+Not Found: /inventario/dashboard
+"GET /inventario/dashboard HTTP/1.1" 404 16209
+Not Found: /inventario/dashboard.html
+"GET /inventario/dashboard.html HTTP/1.1" 404 14521
+Not Found: /inventario/dashboard.
+"GET /inventario/dashboard. HTTP/1.1" 404 14509
+Internal Server Error: /inventario/dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 1864, in inventario_dashboard
+    bodegas_regionales = Bodega.objects.exclude(
+                         ~~~~~~~~~~~~~~~~~~~~~~^
+        id=bodega_central.codigo_bodega if bodega_central else None
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).order_by('nombre_bodega')
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in exclude
+    return self._filter_or_exclude(True, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1511, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1516, in _filter_or_exclude_inplace
+    self._query.add_q(~Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1646, in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1806, in names_to_path
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Cannot resolve keyword 'id' into field. Choices are: bodegueros, capacidad, codigo_bodega, codigo_tipo, codigo_tipo_id, direccion_bodega, herramientas, materiales, nombre_bodega
+"GET /inventario/dashboard/ HTTP/1.1" 500 119769
+Internal Server Error: /inventario/dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 1864, in inventario_dashboard
+    bodegas_regionales = Bodega.objects.exclude(
+                         ~~~~~~~~~~~~~~~~~~~~~~^
+        id=bodega_central.codigo_bodega if bodega_central else None
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ).order_by('nombre_bodega')
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1501, in exclude
+    return self._filter_or_exclude(True, args, kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1511, in _filter_or_exclude
+    clone._filter_or_exclude_inplace(negate, args, kwargs)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 1516, in _filter_or_exclude_inplace
+    self._query.add_q(~Q(*args, **kwargs))
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1646, in add_q
+    clause, _ = self._add_q(q_object, can_reuse)
+                ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1678, in _add_q
+    child_clause, needed_inner = self.build_filter(
+                                 ~~~~~~~~~~~~~~~~~^
+        child,
+        ^^^^^^
+    ...<7 lines>...
+        update_join_types=update_join_types,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1526, in build_filter
+    lookups, parts, reffed_expression = self.solve_lookup_type(arg, summarize)
+                                        ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1333, in solve_lookup_type
+    _, field, _, lookup_parts = self.names_to_path(lookup_splitted, self.get_meta())
+                                ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\sql\query.py", line 1806, in names_to_path
+    raise FieldError(
+    ...<2 lines>...
+    )
+django.core.exceptions.FieldError: Cannot resolve keyword 'id' into field. Choices are: bodegueros, capacidad, codigo_bodega, codigo_tipo, codigo_tipo_id, direccion_bodega, herramientas, materiales, nombre_bodega
+"GET /inventario/dashboard/ HTTP/1.1" 500 119906
+Internal Server Error: /inventario/bodega/5/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 2145, in bodega_detalle
+    return render(request, 'inventario/bodega_detalle.html', context)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: inventario/bodega_detalle.html
+"GET /inventario/bodega/5/ HTTP/1.1" 500 91333
+Internal Server Error: /inventario/transferir/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 2205, in transferir_material
+    return render(request, 'inventario/transferir_material.html', context)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: inventario/transferir_material.html
+"GET /inventario/transferir/ HTTP/1.1" 500 92381
+Not Found: /inventario/bodega-central/dashboard
+"GET /inventario/bodega-central/dashboard HTTP/1.1" 404 15564
+Not Found: /bodega-central/dashboard
+"GET /bodega-central/dashboard HTTP/1.1" 404 15531
+Not Found: /bodega-central/dashboard
+"GET /bodega-central/dashboard HTTP/1.1" 404 15531
+Internal Server Error: /bodega-central/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 2313, in bodega_central_dashboard
+    bodega_central, created = Bodega.objects.get_or_create(
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        nombre_bodega__icontains='central',
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 946, in get_or_create
+    return self.get(**kwargs), False
+           ~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 636, in get
+    raise self.model.MultipleObjectsReturned(
+    ...<5 lines>...
+    )
+appiconstruction.models.Bodega.MultipleObjectsReturned: get() returned more than one Bodega -- it returned 3!
+"GET //bodega-central/ HTTP/1.1" 500 88049
+Internal Server Error: /bodega-central/
+Traceback (most recent call last):
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\contrib\auth\decorators.py", line 59, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "C:\Users\Rafael\Desktop\Proyectointegrado\iconstruction\appiconstruction\views.py", line 2313, in bodega_central_dashboard
+    bodega_central, created = Bodega.objects.get_or_create(
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        nombre_bodega__icontains='central',
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 946, in get_or_create
+    return self.get(**kwargs), False
+           ~~~~~~~~^^^^^^^^^^
+  File "C:\Users\Rafael\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\db\models\query.py", line 636, in get
+    raise self.model.MultipleObjectsReturned(
+    ...<5 lines>...
+    )
+appiconstruction.models.Bodega.MultipleObjectsReturned: get() returned more than one Bodega -- it returned 3!
+"GET /bodega-central/ HTTP/1.1" 500 88049
+Not Found: /inventario/
+"GET /inventario/ HTTP/1.1" 404 15492
+Not Found: /inventario/

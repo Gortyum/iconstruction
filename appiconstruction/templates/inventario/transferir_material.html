@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Transferir Material - Sistema de Inventario{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'inventario_dashboard' %}">Inventario</a></li>
+                <li class="breadcrumb-item active">Transferir Material</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-arrow-left-right"></i> Transferir Material entre Bodegas
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Instrucciones:</strong> Seleccione la bodega de origen, destino, el material y la cantidad a transferir.
+                    El sistema verificará que haya stock suficiente antes de realizar la transferencia.
+                </div>
+
+                <form method="post" id="formTransferencia">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="bodega_origen" class="form-label">
+                                <i class="bi bi-building"></i> Bodega de Origen *
+                            </label>
+                            <select class="form-select" id="bodega_origen" name="bodega_origen" required>
+                                <option value="">Seleccione bodega origen...</option>
+                                {% for bodega in bodegas %}
+                                <option value="{{ bodega.codigo_bodega }}">
+                                    {{ bodega.nombre_bodega }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="bodega_destino" class="form-label">
+                                <i class="bi bi-building-fill"></i> Bodega de Destino *
+                            </label>
+                            <select class="form-select" id="bodega_destino" name="bodega_destino" required>
+                                <option value="">Seleccione bodega destino...</option>
+                                {% for bodega in bodegas %}
+                                <option value="{{ bodega.codigo_bodega }}">
+                                    {{ bodega.nombre_bodega }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="material" class="form-label">
+                            <i class="bi bi-box-seam"></i> Material *
+                        </label>
+                        <select class="form-select" id="material" name="material" required>
+                            <option value="">Seleccione un material...</option>
+                            {% for material in materiales %}
+                            <option value="{{ material.codigo_material }}">
+                                {{ material.nombre_material }} 
+                                {% if material.codigo_tipo %}
+                                    - {{ material.codigo_tipo.nombre_tipo }}
+                                {% endif %}
+                                ({{ material.unidad_medida|default:"unidad" }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            Seleccione el material que desea transferir
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="cantidad" class="form-label">
+                            <i class="bi bi-hash"></i> Cantidad a Transferir *
+                        </label>
+                        <input type="number" 
+                               class="form-control" 
+                               id="cantidad" 
+                               name="cantidad" 
+                               step="0.01" 
+                               min="0.01" 
+                               required
+                               placeholder="Ingrese la cantidad">
+                        <div class="form-text">
+                            Stock disponible en bodega origen: <strong id="stock_disponible">-</strong>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning" id="alerta_bodegas" style="display: none;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        La bodega de origen y destino deben ser diferentes.
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="btnTransferir">
+                            <i class="bi bi-check-circle"></i> Realizar Transferencia
+                        </button>
+                        <a href="{% url 'inventario_dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .breadcrumb {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 1rem;
+        border-radius: 0.75rem;
+    }
+    .form-label {
+        font-weight: 600;
+        color: var(--dark);
+    }
+    .form-select, .form-control {
+        border-radius: 0.5rem;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem;
+    }
+    .form-select:focus, .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bodegaOrigen = document.getElementById('bodega_origen');
+    const bodegaDestino = document.getElementById('bodega_destino');
+    const alerta = document.getElementById('alerta_bodegas');
+    const btnTransferir = document.getElementById('btnTransferir');
+    const formTransferencia = document.getElementById('formTransferencia');
+    
+    function validarBodegas() {
+        if (bodegaOrigen.value && bodegaDestino.value) {
+            if (bodegaOrigen.value === bodegaDestino.value) {
+                alerta.style.display = 'block';
+                btnTransferir.disabled = true;
+                return false;
+            } else {
+                alerta.style.display = 'none';
+                btnTransferir.disabled = false;
+                return true;
+            }
+        }
+        return true;
+    }
+    
+    bodegaOrigen.addEventListener('change', validarBodegas);
+    bodegaDestino.addEventListener('change', validarBodegas);
+    
+    formTransferencia.addEventListener('submit', function(e) {
+        if (!validarBodegas()) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

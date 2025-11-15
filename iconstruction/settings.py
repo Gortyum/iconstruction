@@ -17,6 +17,30 @@ import dj_database_url
 
 load_dotenv()
 
+
+
+class SecurityMiddleware:
+    
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # Headers de seguridad básicos
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['X-XSS-Protection'] = '1; mode=block'
+        
+        # Evitar que las cookies de sesión se envíen en requests cross-site
+        if hasattr(response, 'cookies'):
+            for cookie in response.cookies.values():
+                if 'sessionid' in cookie.key:
+                    cookie['samesite'] = 'Lax'
+        
+        return response
+
 # Usuario personalizado
 AUTH_USER_MODEL = 'appiconstruction.Usuario'
 
@@ -167,3 +191,31 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+
+# Configuración de logging para seguridad
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs/django.log'),
+            'maxBytes': 10485760,  # 10MB
+            'backupCount': 5,
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+    },
+}
+
+# Crear directorio de logs si no existe
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)

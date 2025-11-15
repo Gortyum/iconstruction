@@ -1,0 +1,806 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Obras{% endblock %}
+
+{% block extra_css %}
+<style>
+    .projects-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 60px rgba(240, 147, 251, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .projects-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+        animation: shimmer 4s infinite;
+    }
+    
+    .project-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 1.25rem;
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-left: 5px solid #f5576c;
+    }
+    
+    .project-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(245, 87, 108, 0.25);
+    }
+    
+    .project-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1.2rem;
+        border-radius: 2rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: 1px solid;
+    }
+    
+    .status-planificacion { 
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(37, 99, 235, 0.1));
+        color: #1e3a8a;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+    .status-en-proceso { 
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+        color: #92400e;
+        border-color: rgba(245, 158, 11, 0.3);
+    }
+    .status-completada { 
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+        color: #065f46;
+        border-color: rgba(16, 185, 129, 0.3);
+    }
+    .status-suspendida { 
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.1));
+        color: #991b1b;
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    .progress-container {
+        background: rgba(0, 0, 0, 0.05);
+        height: 12px;
+        border-radius: 1rem;
+        overflow: hidden;
+        margin: 1rem 0;
+        position: relative;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+        transition: width 0.8s ease;
+        border-radius: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer-progress 2s infinite;
+    }
+    
+    @keyframes shimmer-progress {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(245, 87, 108, 0.05);
+        border-radius: 0.75rem;
+        transition: all 0.3s ease;
+    }
+    
+    .info-item:hover {
+        background: rgba(245, 87, 108, 0.1);
+        transform: translateX(5px);
+    }
+    
+    .info-item i {
+        color: #f5576c;
+        width: 24px;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    
+    .info-item .info-content {
+        flex: 1;
+    }
+    
+    .info-item .info-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-item .info-value {
+        font-size: 0.95rem;
+        color: #0f172a;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+    
+    .team-section {
+        background: linear-gradient(135deg, rgba(245, 87, 108, 0.05), rgba(240, 147, 251, 0.05));
+        padding: 1.25rem;
+        border-radius: 1rem;
+        margin-top: 1.25rem;
+        border: 1px dashed rgba(245, 87, 108, 0.2);
+    }
+    
+    .team-member {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        margin: 0.25rem;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(245, 87, 108, 0.1);
+    }
+    
+    .team-member:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(245, 87, 108, 0.2);
+    }
+    
+    .team-member i {
+        color: #f5576c;
+    }
+    
+    .filters-bar {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 1.75rem;
+        border-radius: 1.25rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .stats-overview {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        padding: 1.75rem;
+        border-radius: 1.25rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .stat-box {
+        text-align: center;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-box::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    }
+    
+    .stat-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(245, 87, 108, 0.3);
+    }
+    
+    .stat-box h3 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .stat-box p {
+        margin: 0.75rem 0 0 0;
+        opacity: 0.95;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .btn-project {
+        padding: 0.6rem 1.2rem;
+        border-radius: 0.75rem;
+        border: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-project::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+    
+    .btn-project:hover::before {
+        width: 200px;
+        height: 200px;
+    }
+    
+    .btn-details { 
+        background: linear-gradient(135deg, #2196f3, #1976d2);
+        color: white;
+        box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+    }
+    .btn-manage { 
+        background: linear-gradient(135deg, #4caf50, #388e3c);
+        color: white;
+        box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    }
+    .btn-report { 
+        background: linear-gradient(135deg, #ff9800, #f57c00);
+        color: white;
+        box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+    }
+    .btn-delete { 
+        background: linear-gradient(135deg, #f44336, #d32f2f);
+        color: white;
+        box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+    }
+    
+    .btn-project:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 25px rgba(0,0,0,0.25);
+    }
+    
+    .timeline-badge {
+        background: white;
+        color: #64748b;
+        padding: 0.4rem 1rem;
+        border-radius: 1.5rem;
+        font-size: 0.85rem;
+        border: 2px solid rgba(245, 87, 108, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .timeline-badge i {
+        color: #f5576c;
+    }
+    
+    .form-select, .form-control {
+        border-radius: 0.75rem;
+        border: 2px solid rgba(245, 87, 108, 0.2);
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus, .form-control:focus {
+        border-color: #f5576c;
+        box-shadow: 0 0 0 4px rgba(245, 87, 108, 0.1);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #f5576c;
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+    }
+    
+    .modal-content {
+        border-radius: 1.5rem;
+        border: none;
+        box-shadow: 0 30px 90px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        border-top-left-radius: 1.5rem;
+        border-top-right-radius: 1.5rem;
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+        color: white;
+        border: none;
+        padding: 1.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="projects-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2" style="position: relative; z-index: 1;">
+                    <i class="bi bi-building"></i> Gestión de Obras
+                </h1>
+                <p class="mb-0" style="position: relative; z-index: 1; opacity: 0.95;">
+                    Administra todos los proyectos de construcción
+                </p>
+            </div>
+            <div class="col-md-4 text-end" style="position: relative; z-index: 1;">
+                {% if perms.inventario.add_obra %}
+                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+                    <i class="bi bi-plus-circle"></i> Nueva Obra
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="stat-box">
+                    <h3>{{ total_obras|default:0 }}</h3>
+                    <p><i class="bi bi-building"></i> Total de Obras</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <h3>{{ obras_activas|default:0 }}</h3>
+                    <p><i class="bi bi-hammer"></i> En Proceso</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box" style="background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);">
+                    <h3>{{ obras_completadas|default:0 }}</h3>
+                    <p><i class="bi bi-check-circle"></i> Completadas</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3>{{ total_obreros|default:0 }}</h3>
+                    <p><i class="bi bi-people"></i> Trabajadores</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+        <form method="GET" id="filterForm" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" 
+                       placeholder="🔍 Buscar obra..." value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-2">
+                <select name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    {% for estado in estados_obra %}
+                    <option value="{{ estado.codigo_estado }}" 
+                            {% if request.GET.estado == estado.codigo_estado|stringformat:"s" %}selected{% endif %}>
+                        {{ estado.nombre_estado }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="categoria" class="form-select">
+                    <option value="">Todas las categorías</option>
+                    {% for categoria in categorias_obra %}
+                    <option value="{{ categoria.codigo_categoria }}" 
+                            {% if request.GET.categoria == categoria.codigo_categoria|stringformat:"s" %}selected{% endif %}>
+                        {{ categoria.nombre_categoria }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="comuna" class="form-select">
+                    <option value="">Todas las comunas</option>
+                    {% for comuna in comunas %}
+                    <option value="{{ comuna.codigo_comuna }}" 
+                            {% if request.GET.comuna == comuna.codigo_comuna|stringformat:"s" %}selected{% endif %}>
+                        {{ comuna.nombre_comuna }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="ordenar" class="form-select">
+                    <option value="">Ordenar por...</option>
+                    <option value="reciente" {% if request.GET.ordenar == 'reciente' %}selected{% endif %}>Más recientes</option>
+                    <option value="antigua" {% if request.GET.ordenar == 'antigua' %}selected{% endif %}>Más antiguas</option>
+                    <option value="nombre" {% if request.GET.ordenar == 'nombre' %}selected{% endif %}>Nombre A-Z</option>
+                    <option value="metros" {% if request.GET.ordenar == 'metros' %}selected{% endif %}>Mayor superficie</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Projects List -->
+    <div class="row">
+        {% for obra in obras %}
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="project-card">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h5 class="mb-0 fw-bold">{{ obra.nombre_obra }}</h5>
+                    <span class="project-status status-{{ obra.codigo_estado.nombre_estado|lower|slugify }}">
+                        <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                        {{ obra.codigo_estado.nombre_estado }}
+                    </span>
+                </div>
+
+                <!-- Progress Bar -->
+                {% if obra.fecha_inicio and obra.fecha_termino %}
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: {{ obra.progreso|default:0 }}%"></div>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <small class="text-muted">Progreso</small>
+                    <small class="fw-bold" style="color: #f5576c;">{{ obra.progreso|default:0 }}%</small>
+                </div>
+                {% endif %}
+
+                <!-- Info Grid -->
+                <div class="info-grid">
+                    <div class="info-item">
+                        <i class="bi bi-geo-alt-fill"></i>
+                        <div class="info-content">
+                            <div class="info-label">Ubicación</div>
+                            <div class="info-value">{{ obra.codigo_comuna.nombre_comuna }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-tag-fill"></i>
+                        <div class="info-content">
+                            <div class="info-label">Categoría</div>
+                            <div class="info-value">{{ obra.codigo_categoria.nombre_categoria }}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-rulers"></i>
+                        <div class="info-content">
+                            <div class="info-label">Superficie</div>
+                            <div class="info-value">{{ obra.metros_cuadrados|floatformat:2|default:"N/A" }} m²</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="bi bi-people-fill"></i>
+                        <div class="info-content">
+                            <div class="info-label">Trabajadores</div>
+                            <div class="info-value">{{ obra.obreros.count }} obreros</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                {% if obra.fecha_inicio %}
+                <div class="mt-3 mb-3">
+                    <div class="d-flex gap-2 align-items-center">
+                        <span class="timeline-badge">
+                            <i class="bi bi-calendar-event"></i>
+                            Inicio: {{ obra.fecha_inicio|date:"d/m/Y" }}
+                        </span>
+                        {% if obra.fecha_termino %}
+                        <span class="timeline-badge">
+                            <i class="bi bi-calendar-check"></i>
+                            Fin: {{ obra.fecha_termino|date:"d/m/Y" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Team Section -->
+                {% if obra.supervisores.all %}
+                <div class="team-section">
+                    <small class="text-muted fw-bold d-block mb-2">
+                        <i class="bi bi-person-badge"></i> Supervisores:
+                    </small>
+                    {% for supervisor in obra.supervisores.all %}
+                    <span class="team-member">
+                        <i class="bi bi-person-circle"></i>
+                        {{ supervisor.nombre_supervisor }} {{ supervisor.apellido_supervisor }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Actions -->
+                <div class="action-buttons">
+                    <button class="btn-project btn-details" onclick="viewProject({{ obra.codigo_obra }})">
+                        <i class="bi bi-eye"></i> Ver Detalles
+                    </button>
+                    {% if perms.inventario.change_obra %}
+                    <button class="btn-project btn-manage" onclick="manageProject({{ obra.codigo_obra }})">
+                        <i class="bi bi-gear"></i> Gestionar
+                    </button>
+                    {% endif %}
+                    {% if user.is_supervisor or user.is_admin %}
+                    <button class="btn-project btn-report" onclick="viewReports({{ obra.codigo_obra }})">
+                        <i class="bi bi-file-text"></i> Informes
+                    </button>
+                    {% endif %}
+                    {% if perms.inventario.delete_obra %}
+                    <button class="btn-project btn-delete" onclick="deleteProject({{ obra.codigo_obra }})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="bi bi-building"></i>
+                <h4 class="mb-3">No se encontraron obras</h4>
+                <p class="text-muted">Intenta ajustar los filtros o crea una nueva obra.</p>
+                {% if perms.inventario.add_obra %}
+                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addProjectModal">
+                    <i class="bi bi-plus-circle"></i> Crear Primera Obra
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="Paginación" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Primera
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Anterior
+                </a>
+            </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Siguiente
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                    Última
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Modal: Agregar Obra -->
+<div class="modal fade" id="addProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Crear Nueva Obra</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'obra_crear' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Nombre de la Obra *</label>
+                            <input type="text" name="nombre_obra" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Estado *</label>
+                            <select name="codigo_estado" class="form-select" required>
+                                {% for estado in estados_obra %}
+                                <option value="{{ estado.codigo_estado }}">{{ estado.nombre_estado }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Dirección</label>
+                            <input type="text" name="direccion_obra" class="form-control" placeholder="Calle, número, detalles...">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Comuna *</label>
+                            <select name="codigo_comuna" class="form-select" required>
+                                {% for comuna in comunas %}
+                                <option value="{{ comuna.codigo_comuna }}">{{ comuna.nombre_comuna }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Categoría *</label>
+                            <select name="codigo_categoria" class="form-select" required>
+                                {% for categoria in categorias_obra %}
+                                <option value="{{ categoria.codigo_categoria }}">{{ categoria.nombre_categoria }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Metros Cuadrados</label>
+                            <input type="number" step="0.01" name="metros_cuadrados" class="form-control" placeholder="0.00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha de Inicio</label>
+                            <input type="date" name="fecha_inicio" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Fecha de Término</label>
+                            <input type="date" name="fecha_termino" class="form-control">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Crear Obra
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewProject(id) {
+    window.location.href = `/obras/${id}/`;
+}
+
+function manageProject(id) {
+    window.location.href = `/obras/${id}/editar/`;
+}
+
+function viewReports(id) {
+    window.location.href = `/obras/${id}/informes/`;
+}
+
+function deleteProject(id) {
+    if (confirm('¿Está seguro de eliminar esta obra? Esta acción no se puede deshacer y eliminará todos los datos asociados.')) {
+        fetch(`/obras/${id}/eliminar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        }).then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Error al eliminar la obra');
+            }
+        });
+    }
+}
+
+// Auto-submit filters on change
+document.querySelectorAll('select[name="estado"], select[name="categoria"], select[name="comuna"], select[name="ordenar"]').forEach(select => {
+    select.addEventListener('change', () => {
+        document.getElementById('filterForm').submit();
+    });
+});
+
+// Animación de entrada para las tarjetas
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.project-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+    
+    // Animar las barras de progreso
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+});
+
+// Validación del formulario
+document.querySelector('#addProjectModal form')?.addEventListener('submit', function(e) {
+    const fechaInicio = document.querySelector('input[name="fecha_inicio"]').value;
+    const fechaTermino = document.querySelector('input[name="fecha_termino"]').value;
+    
+    if (fechaInicio && fechaTermino) {
+        const inicio = new Date(fechaInicio);
+        const termino = new Date(fechaTermino);
+        
+        if (termino < inicio) {
+            e.preventDefault();
+            alert('La fecha de término no puede ser anterior a la fecha de inicio');
+            return false;
+        }
+    }
+});
+</script>
+{% endblock %}

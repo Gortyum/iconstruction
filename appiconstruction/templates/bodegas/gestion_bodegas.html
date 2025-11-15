@@ -1,0 +1,708 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Bodegas{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bodegas-header {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 2.5rem;
+        border-radius: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 20px 60px rgba(17, 153, 142, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .bodegas-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+        animation: shimmer 4s infinite;
+    }
+    
+    .bodega-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 1.25rem;
+        padding: 1.75rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        position: relative;
+    }
+    
+    .bodega-card.central {
+        border-left: 5px solid #f59e0b;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(251, 191, 36, 0.02));
+    }
+    
+    .bodega-card.local {
+        border-left: 5px solid #11998e;
+    }
+    
+    .bodega-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 60px rgba(17, 153, 142, 0.25);
+    }
+    
+    .bodega-tipo-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1.2rem;
+        border-radius: 2rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .bodega-tipo-badge.central {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.15));
+        color: #92400e;
+        border: 2px solid rgba(245, 158, 11, 0.3);
+    }
+    
+    .bodega-tipo-badge.local {
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.2), rgba(56, 239, 125, 0.15));
+        color: #065f46;
+        border: 2px solid rgba(17, 153, 142, 0.3);
+    }
+    
+    .region-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.9rem;
+        background: rgba(17, 153, 142, 0.1);
+        border-radius: 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #065f46;
+        margin-top: 0.5rem;
+    }
+    
+    .capacity-bar {
+        background: rgba(0, 0, 0, 0.05);
+        height: 12px;
+        border-radius: 1rem;
+        overflow: hidden;
+        margin: 1rem 0;
+        position: relative;
+    }
+    
+    .capacity-fill {
+        height: 100%;
+        border-radius: 1rem;
+        transition: width 0.8s ease;
+        position: relative;
+    }
+    
+    .capacity-fill.high {
+        background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    .capacity-fill.medium {
+        background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+    }
+    
+    .capacity-fill.low {
+        background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1.5rem 0;
+    }
+    
+    .stat-item {
+        background: rgba(17, 153, 142, 0.05);
+        padding: 1rem;
+        border-radius: 0.75rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        background: rgba(17, 153, 142, 0.1);
+        transform: translateY(-3px);
+    }
+    
+    .stat-item i {
+        font-size: 1.5rem;
+        color: #11998e;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-item .value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    
+    .stat-item .label {
+        font-size: 0.8rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.25rem;
+    }
+    
+    .materials-preview {
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.05), rgba(56, 239, 125, 0.02));
+        padding: 1.25rem;
+        border-radius: 1rem;
+        margin-top: 1.25rem;
+        border: 1px dashed rgba(17, 153, 142, 0.2);
+    }
+    
+    .material-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .material-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .material-name {
+        font-weight: 600;
+        color: #0f172a;
+    }
+    
+    .material-quantity {
+        color: #11998e;
+        font-weight: 700;
+    }
+    
+    .region-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    }
+    
+    .region-tab {
+        padding: 0.7rem 1.5rem;
+        border-radius: 0.75rem;
+        border: 2px solid rgba(17, 153, 142, 0.2);
+        background: white;
+        color: #64748b;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .region-tab:hover {
+        border-color: #11998e;
+        color: #11998e;
+        transform: translateY(-2px);
+    }
+    
+    .region-tab.active {
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+        color: white;
+        border-color: #11998e;
+        box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+    }
+    
+    .transfer-section {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 1.75rem;
+        border-radius: 1.25rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    }
+    
+    .transfer-card {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.02));
+        padding: 1.25rem;
+        border-radius: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #6366f1;
+    }
+    
+    .btn-transfer {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        padding: 0.7rem 1.5rem;
+        border-radius: 0.75rem;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+    }
+    
+    .btn-transfer:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 25px rgba(99, 102, 241, 0.4);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 1.5rem;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        color: #11998e;
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+    }
+    
+    .bodeguero-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(17, 153, 142, 0.05);
+        border-radius: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    .bodeguero-info i {
+        color: #11998e;
+        font-size: 1.2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="bodegas-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2" style="position: relative; z-index: 1;">
+                    <i class="bi bi-shop"></i> Gestión de Bodegas
+                </h1>
+                <p class="mb-0" style="position: relative; z-index: 1; opacity: 0.95;">
+                    Control de bodega central y bodegas locales en todo Chile
+                </p>
+            </div>
+            <div class="col-md-4 text-end" style="position: relative; z-index: 1;">
+                {% if perms.inventario.add_bodega %}
+                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#addBodegaModal">
+                    <i class="bi bi-plus-circle"></i> Nueva Bodega
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros por Región -->
+    <div class="region-tabs">
+        <button class="region-tab active" onclick="filterRegion('todas')">
+            <i class="bi bi-globe-americas"></i> Todas las Regiones
+        </button>
+        <button class="region-tab" onclick="filterRegion('central')">
+            <i class="bi bi-building"></i> Bodega Central
+        </button>
+        <button class="region-tab" onclick="filterRegion('norte')">Norte</button>
+        <button class="region-tab" onclick="filterRegion('centro')">Centro</button>
+        <button class="region-tab" onclick="filterRegion('sur')">Sur</button>
+        <button class="region-tab" onclick="filterRegion('austral')">Austral</button>
+    </div>
+
+    <!-- Sección de Transferencias -->
+    {% if perms.inventario.add_material %}
+    <div class="transfer-section">
+        <h5 class="mb-3 fw-bold">
+            <i class="bi bi-arrow-left-right"></i> Transferencias Entre Bodegas
+        </h5>
+        <div class="row">
+            <div class="col-md-8">
+                <p class="text-muted mb-3">Transfiere materiales desde la bodega central a bodegas locales o entre bodegas locales</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn-transfer" data-bs-toggle="modal" data-bs-target="#transferModal">
+                    <i class="bi bi-box-arrow-right"></i> Nueva Transferencia
+                </button>
+            </div>
+        </div>
+        
+        <!-- Últimas Transferencias -->
+        {% if ultimas_transferencias %}
+        <div class="mt-3">
+            <h6 class="text-muted mb-3">Últimas Transferencias:</h6>
+            {% for trans in ultimas_transferencias %}
+            <div class="transfer-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ trans.material.nombre_material }}</strong> - {{ trans.cantidad }} {{ trans.material.unidad_medida }}
+                        <br>
+                        <small class="text-muted">
+                            De: {{ trans.bodega_origen.nombre_bodega }} → {{ trans.bodega_destino.nombre_bodega }}
+                            | {{ trans.fecha|date:"d/m/Y H:i" }}
+                        </small>
+                    </div>
+                    <span class="badge bg-success">Completada</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Lista de Bodegas -->
+    <div class="row" id="bodegasContainer">
+        {% for bodega in bodegas %}
+        <div class="col-md-6 col-lg-4 mb-3 bodega-item" data-region="{{ bodega.region }}">
+            <div class="bodega-card {% if bodega.es_central %}central{% else %}local{% endif %}">
+                <!-- Badge de Tipo -->
+                <span class="bodega-tipo-badge {% if bodega.es_central %}central{% else %}local{% endif %}">
+                    {% if bodega.es_central %}
+                        <i class="bi bi-star-fill"></i> CENTRAL
+                    {% else %}
+                        <i class="bi bi-geo-alt-fill"></i> LOCAL
+                    {% endif %}
+                </span>
+                
+                <!-- Nombre y Dirección -->
+                <h5 class="mb-2 fw-bold" style="margin-top: 2rem;">{{ bodega.nombre_bodega }}</h5>
+                <p class="text-muted mb-2">
+                    <i class="bi bi-geo-alt"></i> {{ bodega.direccion_bodega|default:"Sin dirección registrada" }}
+                </p>
+                
+                {% if not bodega.es_central %}
+                <div class="region-indicator">
+                    <i class="bi bi-map"></i>
+                    {{ bodega.get_region_display }}
+                </div>
+                {% endif %}
+                
+                <!-- Capacidad -->
+                {% if bodega.capacidad %}
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted fw-bold">Capacidad Utilizada</small>
+                        <small class="fw-bold">{{ bodega.porcentaje_uso|floatformat:1 }}%</small>
+                    </div>
+                    <div class="capacity-bar">
+                        <div class="capacity-fill {% if bodega.porcentaje_uso > 80 %}high{% elif bodega.porcentaje_uso > 50 %}medium{% else %}low{% endif %}" 
+                             style="width: {{ bodega.porcentaje_uso }}%"></div>
+                    </div>
+                    <small class="text-muted">
+                        {{ bodega.capacidad_usada|floatformat:2 }} / {{ bodega.capacidad|floatformat:2 }} m³
+                    </small>
+                </div>
+                {% endif %}
+                
+                <!-- Estadísticas -->
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <i class="bi bi-box-seam"></i>
+                        <div class="value">{{ bodega.materiales.count }}</div>
+                        <div class="label">Materiales</div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="bi bi-tools"></i>
+                        <div class="value">{{ bodega.herramientas.count }}</div>
+                        <div class="label">Herramientas</div>
+                    </div>
+                    <div class="stat-item">
+                        <i class="bi bi-people"></i>
+                        <div class="value">{{ bodega.bodegueros.count }}</div>
+                        <div class="label">Bodegueros</div>
+                    </div>
+                </div>
+                
+                <!-- Bodegueros Asignados -->
+                {% if bodega.bodegueros.all %}
+                <div class="bodeguero-info">
+                    <i class="bi bi-person-badge"></i>
+                    <div>
+                        <small class="text-muted d-block">Responsables:</small>
+                        {% for bb in bodega.bodegueros.all %}
+                        <small class="fw-bold">{{ bb.id_bodeguero.nombre_bodeguero }} {{ bb.id_bodeguero.apellido_bodeguero }}</small>
+                        {% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Preview de Materiales -->
+                {% if bodega.materiales.all %}
+                <div class="materials-preview">
+                    <small class="text-muted fw-bold d-block mb-2">
+                        <i class="bi bi-box"></i> Materiales Almacenados:
+                    </small>
+                    {% for mat in bodega.materiales.all|slice:":3" %}
+                    <div class="material-item">
+                        <span class="material-name">{{ mat.codigo_material.nombre_material }}</span>
+                        <span class="material-quantity">{{ mat.cantidad_almacenada|floatformat:2 }} {{ mat.codigo_material.unidad_medida }}</span>
+                    </div>
+                    {% endfor %}
+                    {% if bodega.materiales.count > 3 %}
+                    <small class="text-muted mt-2 d-block text-center">
+                        + {{ bodega.materiales.count|add:"-3" }} materiales más
+                    </small>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Acciones -->
+                <div class="d-flex gap-2 mt-3">
+                    <button class="btn btn-primary btn-sm flex-fill" onclick="viewBodega({{ bodega.codigo_bodega }})">
+                        <i class="bi bi-eye"></i> Ver Detalle
+                    </button>
+                    {% if perms.inventario.change_bodega %}
+                    <button class="btn btn-outline-secondary btn-sm" onclick="editBodega({{ bodega.codigo_bodega }})">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="bi bi-shop"></i>
+                <h4 class="mb-3">No hay bodegas registradas</h4>
+                <p class="text-muted">Comienza agregando la primera bodega al sistema.</p>
+                {% if perms.inventario.add_bodega %}
+                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addBodegaModal">
+                    <i class="bi bi-plus-circle"></i> Crear Primera Bodega
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Modal: Nueva Bodega -->
+<div class="modal fade" id="addBodegaModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                <h5 class="modal-title text-white"><i class="bi bi-plus-circle"></i> Nueva Bodega</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'bodega_crear' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Nombre de la Bodega *</label>
+                            <input type="text" name="nombre_bodega" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Tipo *</label>
+                            <select name="codigo_tipo" class="form-select" required>
+                                {% for tipo in tipos_bodega %}
+                                <option value="{{ tipo.codigo_tipo }}">{{ tipo.nombre_tipo }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Dirección</label>
+                            <input type="text" name="direccion_bodega" class="form-control" placeholder="Calle, número, comuna...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Región</label>
+                            <select name="region" class="form-select">
+                                <option value="">Seleccionar región...</option>
+                                <option value="ARICA">Arica y Parinacota</option>
+                                <option value="TARAPACA">Tarapacá</option>
+                                <option value="ANTOFAGASTA">Antofagasta</option>
+                                <option value="ATACAMA">Atacama</option>
+                                <option value="COQUIMBO">Coquimbo</option>
+                                <option value="VALPARAISO">Valparaíso</option>
+                                <option value="METROPOLITANA">Metropolitana (Central)</option>
+                                <option value="OHIGGINS">O'Higgins</option>
+                                <option value="MAULE">Maule</option>
+                                <option value="NUBLE">Ñuble</option>
+                                <option value="BIOBIO">Biobío</option>
+                                <option value="ARAUCANIA">Araucanía</option>
+                                <option value="RIOS">Los Ríos</option>
+                                <option value="LAGOS">Los Lagos</option>
+                                <option value="AYSEN">Aysén</option>
+                                <option value="MAGALLANES">Magallanes</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Capacidad (m³)</label>
+                            <input type="number" step="0.01" name="capacidad" class="form-control" placeholder="0.00">
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="es_central" id="esCentral">
+                                <label class="form-check-label fw-bold" for="esCentral">
+                                    <i class="bi bi-star"></i> Marcar como Bodega Central
+                                </label>
+                                <small class="text-muted d-block">La bodega central es el almacén principal desde donde se distribuyen los materiales</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Crear Bodega
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Transferencia -->
+<div class="modal fade" id="transferModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                <h5 class="modal-title text-white"><i class="bi bi-arrow-left-right"></i> Nueva Transferencia</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'bodega_transferir' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Bodega Origen *</label>
+                            <select name="bodega_origen" class="form-select" required id="bodegaOrigen">
+                                {% for bod in bodegas %}
+                                <option value="{{ bod.codigo_bodega }}">
+                                    {{ bod.nombre_bodega }} {% if bod.es_central %}(Central){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Bodega Destino *</label>
+                            <select name="bodega_destino" class="form-select" required>
+                                {% for bod in bodegas %}
+                                <option value="{{ bod.codigo_bodega }}">
+                                    {{ bod.nombre_bodega }} {% if bod.es_central %}(Central){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Material *</label>
+                            <select name="codigo_material" class="form-select" required>
+                                {% for material in materiales %}
+                                <option value="{{ material.codigo_material }}">
+                                    {{ material.nombre_material }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Cantidad *</label>
+                            <input type="number" step="0.01" name="cantidad" class="form-control" required placeholder="0.00">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Observaciones</label>
+                            <textarea name="observaciones" class="form-control" rows="3" placeholder="Motivo de la transferencia, condiciones especiales, etc."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-transfer">
+                        <i class="bi bi-arrow-right-circle"></i> Realizar Transferencia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function viewBodega(id) {
+    window.location.href = `/bodegas/${id}/`;
+}
+
+function editBodega(id) {
+    window.location.href = `/bodegas/${id}/editar/`;
+}
+
+function filterRegion(region) {
+    const bodegas = document.querySelectorAll('.bodega-item');
+    const tabs = document.querySelectorAll('.region-tab');
+    
+    // Update active tab
+    tabs.forEach(tab => tab.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    // Filter bodegas
+    bodegas.forEach(bodega => {
+        if (region === 'todas') {
+            bodega.style.display = 'block';
+        } else {
+            const bodegaRegion = bodega.dataset.region;
+            bodega.style.display = bodegaRegion === region ? 'block' : 'none';
+        }
+    });
+}
+
+// Animaciones
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.bodega-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 50);
+    });
+    
+    // Animar barras de capacidad
+    const bars = document.querySelectorAll('.capacity-fill');
+    bars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 500);
+    });
+});
+
+// Validación de transferencia
+document.querySelector('#transferModal form')?.addEventListener('submit', function(e) {
+    const origen = document.querySelector('select[name="bodega_origen"]').value;
+    const destino = document.querySelector('select[name="bodega_destino"]').value;
+    
+    if (origen === destino) {
+        e.preventDefault();
+        alert('La bodega de origen y destino deben ser diferentes');
+        return false;
+    }
+});
+</script>
+{% endblock %}width;
+        bar.style.

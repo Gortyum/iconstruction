@@ -64,18 +64,22 @@ from appiconstruction.views import (
     reporte_obreros, reporte_mermas, reporte_general,
 
     CrearUsuarioView, EditarUsuarioView, CambiarPasswordView,
-    PerfilUsuarioView, resetear_password_usuario,
+    PerfilUsuarioView, resetear_password_usuario, 
+    
+    # Inventario
+    reporte_inventario, inventario_dashboard, bodega_detalle, 
+    transferir_material, ajustar_inventario,
+    bodega_central_dashboard,
+    distribuir_desde_central,
+    abastecer_bodega_central,
+    reporte_distribucion,
+    solicitar_a_central
 )
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('materiales/', MaterialListView.as_view(), name='material_list'),
-    path('materiales/<int:pk>/', MaterialDetailView.as_view(), name='material_detail'),
-    path('materiales/crear/', MaterialCreateView.as_view(), name='material_create'),
-    path('materiales/<int:pk>/editar/', MaterialUpdateView.as_view(), name='material_update'),
-    path('materiales/<int:pk>/eliminar/', MaterialDeleteView.as_view(), name='material_delete'),
-
+    
     # ========== AUTENTICACIÓN ==========
     path('', LoginView.as_view(), name='login'),
     path('login/', LoginView.as_view(), name='login'),
@@ -85,10 +89,16 @@ urlpatterns = [
     
     # ========== GESTIÓN DE USUARIOS (ADMIN) ==========
     path('usuarios/', GestionUsuariosView.as_view(), name='gestion_usuarios'),
+    path('usuarios/crear/', CrearUsuarioView.as_view(), name='crear_usuario'),
+    path('usuarios/<int:user_id>/editar/', EditarUsuarioView.as_view(), name='editar_usuario'),
     path('usuarios/<int:user_id>/activar/', activar_usuario, name='activar_usuario'),
     path('usuarios/<int:user_id>/desactivar/', desactivar_usuario, name='desactivar_usuario'),
     path('usuarios/<int:user_id>/cambiar-rol/', cambiar_rol_usuario, name='cambiar_rol_usuario'),
-
+    path('usuarios/<int:user_id>/resetear-password/', resetear_password_usuario, name='resetear_password_usuario'),
+    
+    # ========== PERFIL Y CONTRASEÑA (TODOS LOS USUARIOS) ==========
+    path('perfil/', PerfilUsuarioView.as_view(), name='perfil'),
+    path('cambiar-password/', CambiarPasswordView.as_view(), name='cambiar_password'),
 
     # ========== MATERIALES ==========
     path('materiales/', MaterialListView.as_view(), name='material_list'),
@@ -154,18 +164,19 @@ urlpatterns = [
     path('reportes/obreros/', reporte_obreros, name='reporte_obreros'),
     path('reportes/mermas/', reporte_mermas, name='reporte_mermas'),
     path('reportes/general/', reporte_general, name='reporte_general'),
+    
+    # ========== INVENTARIO ==========
+    path('inventario/dashboard/', inventario_dashboard, name='inventario_dashboard'),
+    path('inventario/bodega/<int:codigo_bodega>/', bodega_detalle, name='bodega_detalle'),
+    path('inventario/transferir/', transferir_material, name='transferir_material'),
+    path('inventario/ajustar/<int:codigo_bodega>/', ajustar_inventario, name='ajustar_inventario'),
+    path('inventario/reporte/', reporte_inventario, name='reporte_inventario'),
 
-    # ========== GESTIÓN DE USUARIOS (ADMIN) ==========
-    path('usuarios/', GestionUsuariosView.as_view(), name='gestion_usuarios'),
-    path('usuarios/crear/', CrearUsuarioView.as_view(), name='crear_usuario'),
-    path('usuarios/<int:user_id>/editar/', EditarUsuarioView.as_view(), name='editar_usuario'),
-    path('usuarios/<int:user_id>/activar/', activar_usuario, name='activar_usuario'),
-    path('usuarios/<int:user_id>/desactivar/', desactivar_usuario, name='desactivar_usuario'),
-    path('usuarios/<int:user_id>/cambiar-rol/', cambiar_rol_usuario, name='cambiar_rol_usuario'),
-    path('usuarios/<int:user_id>/resetear-password/', resetear_password_usuario, name='resetear_password_usuario'),
+    path('bodega-central/', bodega_central_dashboard, name='bodega_central_dashboard'),
+    path('bodega-central/distribuir/', distribuir_desde_central, name='distribuir_desde_central'),
+    path('bodega-central/abastecer/', abastecer_bodega_central, name='abastecer_bodega_central'),
+    path('bodega-central/reporte/', reporte_distribucion, name='reporte_distribucion'),
     
-    # ========== PERFIL Y CONTRASEÑA (TODOS LOS USUARIOS) ==========
-    path('perfil/', PerfilUsuarioView.as_view(), name='perfil'),
-    path('cambiar-password/', CambiarPasswordView.as_view(), name='cambiar_password'),
-    
+    # Solicitud desde bodega regional a central
+    path('bodega/<int:codigo_bodega>/solicitar-a-central/', solicitar_a_central, name='solicitar_a_central'),
 ]

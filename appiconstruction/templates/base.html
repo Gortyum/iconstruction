@@ -456,8 +456,20 @@
                         </a>
                     </li>
                     
+                    <!-- Bodega Central - Visible para todos -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'bodega_central_dashboard' %}">
+                            <i class="bi bi-bank2"></i> Bodega Central
+                        </a>
+                    </li>
+                    
                     {% if user.is_bodeguero %}
                     <!-- Menú para Bodegueros -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventario_dashboard' %}">
+                            <i class="bi bi-grid-3x3-gap-fill"></i> Inventario
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'material_list' %}">
                             <i class="bi bi-box-seam"></i> Materiales
@@ -511,6 +523,11 @@
                     
                     {% if user.is_admin %}
                     <!-- Menú para Administradores -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'inventario_dashboard' %}">
+                            <i class="bi bi-grid-3x3-gap-fill"></i> Inventario
+                        </a>
+                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'obrero_list' %}">
                             <i class="bi bi-people"></i> Obreros

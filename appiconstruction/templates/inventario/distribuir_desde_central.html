@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+
+{% block title %}Distribuir desde Bodega Central{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'bodega_central_dashboard' %}">Bodega Central</a></li>
+                <li class="breadcrumb-item active">Distribuir</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-truck"></i> Distribuir desde {{ bodega_central.nombre_bodega }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Distribución Centralizada:</strong> Solo la Bodega Central puede distribuir 
+                    materiales y herramientas a las bodegas regionales.
+                </div>
+
+                <form method="post" id="formDistribucion">
+                    {% csrf_token %}
+                    
+                    <!-- Selección de Tipo -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label">
+                                <i class="bi bi-list-check"></i> ¿Qué desea distribuir? *
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="tipo_item" id="tipo_material" 
+                                       value="material" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary" for="tipo_material">
+                                    <i class="bi bi-box-seam"></i> Material
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="tipo_item" id="tipo_herramienta" 
+                                       value="herramienta" autocomplete="off">
+                                <label class="btn btn-outline-warning" for="tipo_herramienta">
+                                    <i class="bi bi-tools"></i> Herramienta
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selección de Material -->
+                    <div class="mb-3" id="seccion_material">
+                        <label for="material_id" class="form-label">
+                            <i class="bi bi-box-seam"></i> Material a Distribuir *
+                        </label>
+                        <select class="form-select" id="material_id" name="item_id">
+                            <option value="">Seleccione un material...</option>
+                            {% for mb in materiales_central %}
+                            <option value="{{ mb.codigo_material.codigo_material }}" 
+                                    data-stock="{{ mb.cantidad_almacenada }}"
+                                    data-unidad="{{ mb.codigo_material.unidad_medida|default:'unidad' }}">
+                                {{ mb.codigo_material.nombre_material }} 
+                                - Stock: {{ mb.cantidad_almacenada }} {{ mb.codigo_material.unidad_medida|default:"un" }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Selección de Herramienta -->
+                    <div class="mb-3" id="seccion_herramienta" style="display: none;">
+                        <label for="herramienta_id" class="form-label">
+                            <i class="bi bi-tools"></i> Herramienta a Distribuir *
+                        </label>
+                        <select class="form-select" id="herramienta_id" name="item_id_h">
+                            <option value="">Seleccione una herramienta...</option>
+                            {% for hb in herramientas_central %}
+                            <option value="{{ hb.codigo_herramienta.codigo_herramienta }}" 
+                                    data-stock="{{ hb.cantidad_almacenada }}">
+                                {{ hb.codigo_herramienta.nombre_herramienta }} 
+                                - Stock: {{ hb.cantidad_almacenada }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="bodega_destino" class="form-label">
+                                <i class="bi bi-building"></i> Bodega Regional Destino *
+                            </label>
+                            <select class="form-select" id="bodega_destino" name="bodega_destino" required>
+                                <option value="">Seleccione bodega destino...</option>
+                                {% for bodega in bodegas_destino %}
+                                <option value="{{ bodega.codigo_bodega }}">
+                                    {{ bodega.nombre_bodega }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="cantidad" class="form-label">
+                                <i class="bi bi-hash"></i> Cantidad a Distribuir *
+                            </label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="cantidad" 
+                                   name="cantidad" 
+                                   step="0.01" 
+                                   min="0.01" 
+                                   required
+                                   placeholder="0.00">
+                            <div class="form-text">
+                                Stock disponible: <strong id="stock_info">-</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="motivo" class="form-label">
+                            <i class="bi bi-chat-left-text"></i> Motivo de la Distribución *
+                        </label>
+                        <textarea class="form-control" 
+                                  id="motivo" 
+                                  name="motivo" 
+                                  rows="2" 
+                                  required
+                                  placeholder="Ej: Reabastecimiento mensual, Solicitud urgente, Nueva obra..."></textarea>
+                    </div>
+
+                    <div class="alert alert-warning" id="alerta_stock" style="display: none;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        La cantidad ingresada excede el stock disponible.
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg" id="btnDistribuir">
+                            <i class="bi bi-truck"></i> Confirmar Distribución
+                        </button>
+                        <a href="{% url 'bodega_central_dashboard' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .breadcrumb {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 1rem;
+        border-radius: 0.75rem;
+    }
+    .form-label {
+        font-weight: 600;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoMaterial = document.getElementById('tipo_material');
+    const tipoHerramienta = document.getElementById('tipo_herramienta');
+    const seccionMaterial = document.getElementById('seccion_material');
+    const seccionHerramienta = document.getElementById('seccion_herramienta');
+    const materialSelect = document.getElementById('material_id');
+    const herramientaSelect = document.getElementById('herramienta_id');
+    const cantidadInput = document.getElementById('cantidad');
+    const stockInfo = document.getElementById('stock_info');
+    const alertaStock = document.getElementById('alerta_stock');
+    const btnDistribuir = document.getElementById('btnDistribuir');
+    
+    // Cambiar entre material y herramienta
+    tipoMaterial.addEventListener('change', function() {
+        seccionMaterial.style.display = 'block';
+        seccionHerramienta.style.display = 'none';
+        materialSelect.required = true;
+        herramientaSelect.required = false;
+        herramientaSelect.value = '';
+        actualizarStock();
+    });
+    
+    tipoHerramienta.addEventListener('change', function() {
+        seccionMaterial.style.display = 'none';
+        seccionHerramienta.style.display = 'block';
+        materialSelect.required = false;
+        herramientaSelect.required = true;
+        materialSelect.value = '';
+        actualizarStock();
+    });
+    
+    // Actualizar stock disponible
+    function actualizarStock() {
+        let stock = 0;
+        let unidad = '';
+        
+        if (tipoMaterial.checked && materialSelect.value) {
+            const option = materialSelect.options[materialSelect.selectedIndex];
+            stock = parseFloat(option.dataset.stock);
+            unidad = option.dataset.unidad;
+        } else if (tipoHerramienta.checked && herramientaSelect.value) {
+            const option = herramientaSelect.options[herramientaSelect.selectedIndex];
+            stock = parseFloat(option.dataset.stock);
+            unidad = 'unidades';
+        }
+        
+        stockInfo.textContent = stock > 0 ? `${stock} ${unidad}` : '-';
+        validarCantidad();
+    }
+    
+    materialSelect.addEventListener('change', actualizarStock);
+    herramientaSelect.addEventListener('change', actualizarStock);
+    
+    // Validar cantidad
+    function validarCantidad() {
+        const cantidad = parseFloat(cantidadInput.value) || 0;
+        const stockText = stockInfo.textContent;
+        const stock = stockText !== '-' ? parseFloat(stockText) : 0;
+        
+        if (cantidad > stock && stock > 0) {
+            alertaStock.style.display = 'block';
+            btnDistribuir.disabled = true;
+        } else {
+            alertaStock.style.display = 'none';
+            btnDistribuir.disabled = false;
+        }
+    }
+    
+    cantidadInput.addEventListener('input', validarCantidad);
+    
+    // Antes de enviar, asegurar que el item_id correcto esté en el campo
+    document.getElementById('formDistribucion').addEventListener('submit', function(e) {
+        if (tipoHerramienta.checked) {
+            const herramientaId = herramientaSelect.value;
+            if (herramientaId) {
+                // Cambiar el nombre del campo
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'item_id';
+                input.value = herramientaId;
+                this.appendChild(input);
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

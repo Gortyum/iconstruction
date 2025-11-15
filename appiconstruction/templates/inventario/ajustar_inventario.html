@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Ajustar Inventario - {{ bodega.nombre_bodega }}{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'inventario_dashboard' %}">Inventario</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'bodega_detalle' bodega.codigo_bodega %}">{{ bodega.nombre_bodega }}</a></li>
+                <li class="breadcrumb-item active">Ajustar Inventario</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-plus-circle"></i> Ajustar Stock - {{ bodega.nombre_bodega }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Información:</strong> Use este formulario para agregar o quitar stock del inventario.
+                    Siempre proporcione un motivo para el ajuste (compra, merma, devolución, etc.).
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="material" class="form-label">
+                            <i class="bi bi-box-seam"></i> Material *
+                        </label>
+                        <select class="form-select form-select-lg" id="material" name="material" required>
+                            <option value="">Seleccione un material...</option>
+                            {% for material in materiales %}
+                            <option value="{{ material.codigo_material }}">
+                                {{ material.nombre_material }}
+                                {% if material.codigo_tipo %}
+                                    - {{ material.codigo_tipo.nombre_tipo }}
+                                {% endif %}
+                                ({{ material.unidad_medida|default:"unidad" }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="tipo_ajuste" class="form-label">
+                                <i class="bi bi-arrow-repeat"></i> Tipo de Ajuste *
+                            </label>
+                            <select class="form-select" id="tipo_ajuste" name="tipo_ajuste" required>
+                                <option value="">Seleccione...</option>
+                                <option value="agregar">➕ Agregar Stock</option>
+                                <option value="quitar">➖ Quitar Stock</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="cantidad" class="form-label">
+                                <i class="bi bi-hash"></i> Cantidad *
+                            </label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="cantidad" 
+                                   name="cantidad" 
+                                   step="0.01" 
+                                   min="0.01" 
+                                   required
+                                   placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="motivo" class="form-label">
+                            <i class="bi bi-chat-left-text"></i> Motivo del Ajuste *
+                        </label>
+                        <textarea class="form-control" 
+                                  id="motivo" 
+                                  name="motivo" 
+                                  rows="3" 
+                                  required
+                                  placeholder="Ej: Compra a proveedor X, Merma por deterioro, Devolución de obra..."></textarea>
+                        <div class="form-text">
+                            Describa brevemente el motivo del ajuste de inventario
+                        </div>
+                    </div>
+
+                    <!-- Preview del ajuste -->
+                    <div class="card bg-light mb-4" id="preview" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="bi bi-eye"></i> Vista Previa del Ajuste</h6>
+                            <div id="preview-content"></div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle-fill"></i> Confirmar Ajuste
+                        </button>
+                        <a href="{% url 'bodega_detalle' bodega.codigo_bodega %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Panel de Ayuda -->
+        <div class="card mt-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="bi bi-question-circle"></i> Motivos Comunes</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="bi bi-arrow-up-circle"></i> Para Agregar:</h6>
+                        <ul class="small">
+                            <li>Compra a proveedor</li>
+                            <li>Devolución de obra</li>
+                            <li>Transferencia desde otra bodega</li>
+                            <li>Corrección de inventario</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-danger"><i class="bi bi-arrow-down-circle"></i> Para Quitar:</h6>
+                        <ul class="small">
+                            <li>Merma o deterioro</li>
+                            <li>Robo o pérdida</li>
+                            <li>Uso interno</li>
+                            <li>Corrección de inventario</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .breadcrumb {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 1rem;
+        border-radius: 0.75rem;
+    }
+    .form-label {
+        font-weight: 600;
+        color: var(--dark);
+    }
+    .form-select, .form-control {
+        border-radius: 0.5rem;
+        border: 2px solid #e2e8f0;
+        padding: 0.75rem;
+    }
+    .form-select:focus, .form-control:focus {
+        border-color: var(--success);
+        box-shadow: 0 0 0 0.2rem rgba(16, 185, 129, 0.25);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const material = document.getElementById('material');
+    const tipoAjuste = document.getElementById('tipo_ajuste');
+    const cantidad = document.getElementById('cantidad');
+    const motivo = document.getElementById('motivo');
+    const preview = document.getElementById('preview');
+    const previewContent = document.getElementById('preview-content');
+    
+    function actualizarPreview() {
+        if (material.value && tipoAjuste.value && cantidad.value) {
+            const materialTexto = material.options[material.selectedIndex].text;
+            const tipoTexto = tipoAjuste.value === 'agregar' ? 'AGREGAR' : 'QUITAR';
+            const icono = tipoAjuste.value === 'agregar' ? '➕' : '➖';
+            const clase = tipoAjuste.value === 'agregar' ? 'text-success' : 'text-danger';
+            
+            previewContent.innerHTML = `
+                <p class="mb-2"><strong>Material:</strong> ${materialTexto}</p>
+                <p class="mb-2"><strong>Acción:</strong> <span class="${clase}">${icono} ${tipoTexto}</span></p>
+                <p class="mb-2"><strong>Cantidad:</strong> <span class="badge bg-primary">${cantidad.value}</span></p>
+                ${motivo.value ? `<p class="mb-0"><strong>Motivo:</strong> ${motivo.value}</p>` : ''}
+            `;
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+    
+    material.addEventListener('change', actualizarPreview);
+    tipoAjuste.addEventListener('change', actualizarPreview);
+    cantidad.addEventListener('input', actualizarPreview);
+    motivo.addEventListener('input', actualizarPreview);
+});
+</script>
+{% endblock %}

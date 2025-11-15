@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard de Inventario - Sistema de Gestión{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="bi bi-grid-3x3-gap-fill"></i> Dashboard de Inventario</h2>
+            <div>
+                <a href="{% url 'transferir_material' %}" class="btn btn-primary">
+                    <i class="bi bi-arrow-left-right"></i> Transferir Material
+                </a>
+                <a href="{% url 'reporte_inventario' %}" class="btn btn-info">
+                    <i class="bi bi-file-earmark-text"></i> Reporte Completo
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas Generales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-building display-4 text-primary"></i>
+                <h3 class="mt-3">{{ total_bodegas }}</h3>
+                <p class="text-muted mb-0">Bodegas Totales</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-box-seam display-4 text-success"></i>
+                <h3 class="mt-3">{{ total_materiales }}</h3>
+                <p class="text-muted mb-0">Tipos de Materiales</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-tools display-4 text-warning"></i>
+                <h3 class="mt-3">{{ total_herramientas }}</h3>
+                <p class="text-muted mb-0">Tipos de Herramientas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-stack display-4 text-info"></i>
+                <h3 class="mt-3">{{ stock_materiales|floatformat:0 }}</h3>
+                <p class="text-muted mb-0">Stock Total Materiales</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bodega Central -->
+{% if bodega_central %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-bank2"></i> {{ bodega_central.nombre_bodega }}
+                    <span class="badge bg-light text-primary float-end">Bodega Central</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p><strong>Dirección:</strong> {{ bodega_central.direccion_bodega|default:"No especificada" }}</p>
+                        <p><strong>Tipo:</strong> {{ bodega_central.codigo_tipo.nombre_tipo|default:"General" }}</p>
+                        <p><strong>Capacidad:</strong> {{ bodega_central.capacidad|default:"No especificada" }}</p>
+                    </div>
+                    <div class="col-md-8 text-end">
+                        <a href="{% url 'bodega_detalle' bodega_central.codigo_bodega %}" class="btn btn-primary">
+                            <i class="bi bi-eye"></i> Ver Inventario Completo
+                        </a>
+                        <a href="{% url 'ajustar_inventario' bodega_central.codigo_bodega %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Ajustar Stock
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Bodegas Regionales -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-geo-alt-fill"></i> Bodegas Regionales (Arica - Punta Arenas)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if bodegas_regionales %}
+                <div class="row">
+                    {% for bodega in bodegas_regionales %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100 border-secondary">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="bi bi-building"></i> {{ bodega.nombre_bodega }}
+                                </h6>
+                                <p class="card-text small text-muted mb-2">
+                                    <i class="bi bi-geo-alt"></i> {{ bodega.direccion_bodega|default:"Sin dirección" }}
+                                </p>
+                                <p class="card-text small">
+                                    <span class="badge bg-secondary">{{ bodega.codigo_tipo.nombre_tipo|default:"General" }}</span>
+                                </p>
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'bodega_detalle' bodega.codigo_bodega %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i> Ver Inventario
+                                    </a>
+                                    <a href="{% url 'ajustar_inventario' bodega.codigo_bodega %}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-plus-circle"></i> Ajustar Stock
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> No hay bodegas regionales registradas.
+                    <a href="{% url 'bodega_create' %}" class="alert-link">Crear nueva bodega</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas de Stock Bajo -->
+{% if materiales_bajo_stock %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Alertas de Stock Bajo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Material</th>
+                                <th>Bodega</th>
+                                <th>Stock Actual</th>
+                                <th>Unidad</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in materiales_bajo_stock %}
+                            <tr>
+                                <td>{{ item.codigo_material.nombre_material }}</td>
+                                <td>{{ item.codigo_bodega.nombre_bodega }}</td>
+                                <td>
+                                    <span class="badge bg-danger">{{ item.cantidad_almacenada }}</span>
+                                </td>
+                                <td>{{ item.codigo_material.unidad_medida }}</td>
+                                <td>
+                                    <a href="{% url 'ajustar_inventario' item.codigo_bodega.codigo_bodega %}" 
+                                       class="btn btn-sm btn-warning">
+                                        <i class="bi bi-arrow-up-circle"></i> Reabastecer
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .display-4 {
+        font-size: 3rem;
+    }
+</style>
+{% endblock %}
